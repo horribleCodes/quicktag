@@ -6,6 +6,9 @@ dist/
 build/
 .eggs/
 
+# Temporary files
+.tmp/
+
 # Virtual environments
 .venv/
 venv/
@@ -23,6 +26,9 @@ venv/
 # OS
 .DS_Store
 Thumbs.db
+
+# User data (workspace)
+.vscode/
 
 # User data (local dev copies)
 config.yaml
