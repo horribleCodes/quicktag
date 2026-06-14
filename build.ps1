@@ -10,7 +10,7 @@ $Python = Join-Path $ProjectRoot ".venv\Scripts\python.exe"
 $Pip = Join-Path $ProjectRoot ".venv\Scripts\pip.exe"
 
 Write-Host "==> Installing PyTorch (CPU) and project dependencies"
-& $Pip install --upgrade pip
+& $Python -m pip install --upgrade pip
 & $Pip install torch --index-url https://download.pytorch.org/whl/cpu
 & $Pip install -e ".[dev]"
 
