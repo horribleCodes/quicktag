@@ -45,7 +45,7 @@ pip install torch --index-url https://download.pytorch.org/whl/cpu
 pip install -e ".[dev]"
 
 echo "==> Building executable with PyInstaller"
-pyinstaller quicktag.spec --noconfirm --clean
+pyinstaller quicktag.spec --distpath dist/linux --noconfirm --clean
 
 DIST_DIR="dist/linux/quicktag"
 mkdir -p "$DIST_DIR/input" "$DIST_DIR/output"

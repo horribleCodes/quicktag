@@ -10,7 +10,7 @@ $Python = Join-Path $ProjectRoot ".venv\Scripts\python.exe"
 $Pip = Join-Path $ProjectRoot ".venv\Scripts\pip.exe"
 
 Write-Host "==> Installing PyTorch (CPU) and project dependencies"
-& $Pip install --upgrade pip
+& $Python -m pip install --upgrade pip
 & $Pip install torch --index-url https://download.pytorch.org/whl/cpu
 & $Pip install -e ".[dev]"
 
@@ -31,7 +31,7 @@ Copy-Item -Path (Join-Path $WinDir.FullName "exiftool(-k).exe") -Destination (Jo
 Copy-Item -Path (Join-Path $WinDir.FullName "exiftool_files") -Destination $ExifToolDir -Recurse -Force
 
 Write-Host "==> Building executable with PyInstaller"
-& $Python -m PyInstaller quicktag.spec --noconfirm --clean
+& $Python -m PyInstaller quicktag.spec --distpath dist/win --noconfirm --clean
 
 $DistDir = Join-Path $ProjectRoot "dist\win\quicktag"
 New-Item -ItemType Directory -Force -Path (Join-Path $DistDir "input") | Out-Null
