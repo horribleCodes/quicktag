@@ -33,7 +33,7 @@ Copy-Item -Path (Join-Path $WinDir.FullName "exiftool_files") -Destination $Exif
 Write-Host "==> Building executable with PyInstaller"
 & $Python -m PyInstaller quicktag.spec --noconfirm --clean
 
-$DistDir = Join-Path $ProjectRoot "dist\quicktag"
+$DistDir = Join-Path $ProjectRoot "dist\win\quicktag"
 New-Item -ItemType Directory -Force -Path (Join-Path $DistDir "input") | Out-Null
 New-Item -ItemType Directory -Force -Path (Join-Path $DistDir "output") | Out-Null
 Copy-Item -Path (Join-Path $ProjectRoot "config.example.yaml") -Destination (Join-Path $DistDir "config.yaml") -Force
