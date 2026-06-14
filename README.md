@@ -127,15 +127,30 @@ pytest
 
 On Linux/macOS, install [ExifTool](https://exiftool.org/) and ensure `exiftool` is on `PATH` for metadata writing during development.
 
-## Building for Windows
+## Building
+
+### Linux / macOS
+
+From the repo root with Python 3.11 installed:
+
+```bash
+chmod +x build.sh
+./build.sh
+```
+
+If ExifTool is not installed, the script prints a warning with install instructions and continues. Output lands in `dist/quicktag/`.
+
+### Windows
 
 From a Windows machine with Python 3.11 installed:
 
 ```powershell
-.\scripts\build_windows.ps1
+.\build.ps1
 ```
 
-Output lands in `dist/quicktag/`. GitHub Actions also builds this artifact on push to `main`.
+ExifTool is downloaded and bundled automatically. Output lands in `dist/quicktag/`.
+
+GitHub Actions builds both Linux and Windows artifacts on push to `main`.
 
 ## License
 
