@@ -138,7 +138,7 @@ chmod +x build.sh
 ./build.sh
 ```
 
-If ExifTool is not installed, the script prints a warning with install instructions and continues. Output lands in `dist/quicktag/`.
+If ExifTool is not installed, the script prints a warning with install instructions and continues. Output lands in `dist/linux/quicktag/`.
 
 ### Windows
 
@@ -148,7 +148,7 @@ From a Windows machine with Python 3.11 installed:
 .\build.ps1
 ```
 
-ExifTool is downloaded and bundled automatically. Output lands in `dist/quicktag/`.
+ExifTool is downloaded and bundled automatically. Output lands in `dist/win/quicktag/`.
 
 GitHub Actions builds both Linux and Windows artifacts on push to `main`.
 
