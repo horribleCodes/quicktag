@@ -8,7 +8,12 @@ import sys
 from pathlib import Path
 
 from quicktag.config import load_config
-from quicktag.paths import configure_huggingface_cache, get_install_dir, resolve_path
+from quicktag.paths import (
+    get_install_dir,
+    is_huggingface_cli_installed,
+    resolve_path,
+    setup_huggingface_cache,
+)
 from quicktag.pipeline import run_pipeline
 from quicktag.tags import load_tags
 
@@ -65,7 +70,24 @@ def main(argv: list[str] | None = None) -> int:
         log.error("%s", exc)
         return 1
 
-    cache_dir = configure_huggingface_cache(install_dir, config.model.cache_dir)
+    hf_cache = setup_huggingface_cache(
+        install_dir, config.model.cache_dir, config.model.name
+    )
+
+    if is_huggingface_cli_installed():
+        log.info("Hugging Face CLI detected; using global cache at %s", hf_cache.primary_home)
+    else:
+        log.info(
+            "Hugging Face CLI not found; using local cache at %s",
+            hf_cache.primary_home,
+        )
+
+    if hf_cache.source == "primary":
+        log.info("Model not cached yet; will download to %s", hf_cache.load_home)
+    elif hf_cache.source == "global":
+        log.info("Model found in global cache at %s", hf_cache.load_home)
+    else:
+        log.info("Model found in local cache at %s", hf_cache.load_home)
 
     log.info("Install directory: %s", install_dir)
     log.info("Input: %s", resolve_path(install_dir, config.paths.input))
@@ -73,7 +95,7 @@ def main(argv: list[str] | None = None) -> int:
     log.info("Tags: %d candidates from %s", len(tags), tags_path.name)
 
     try:
-        summary = run_pipeline(config, install_dir, cache_dir, tags)
+        summary = run_pipeline(config, install_dir, hf_cache.load_home, tags)
     except FileNotFoundError as exc:
         log.error("%s", exc)
         return 1
