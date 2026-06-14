@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "quicktag"
+version = "0.1.0"
+description = "Batch image tagger using SigLIP2 vision-language encoder"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "QuickTag Contributors" }]
+dependencies = [
+    "torch>=2.2.0",
+    "transformers>=4.49.0",
+    "pillow>=10.0.0",
+    "pyyaml>=6.0",
+    "PyExifTool>=0.5.6",
+    "huggingface_hub>=0.24.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pyinstaller>=6.0.0",
+]
+
+[project.scripts]
+quicktag = "quicktag.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

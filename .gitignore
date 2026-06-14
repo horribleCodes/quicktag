@@ -1,0 +1,35 @@
+# Byte-compiled / cache
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Virtual environments
+.venv/
+venv/
+
+# Model cache
+.cache/
+
+# PyInstaller
+*.spec.bak
+
+# IDE
+.idea/
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# User data (local dev copies)
+config.yaml
+tags.yaml
+input/
+output/
+
+# ExifTool binary (downloaded at build time)
+assets/exiftool/exiftool.exe
+assets/exiftool/exiftool_files/
