@@ -6,6 +6,9 @@ dist/
 build/
 .eggs/
 
+# Temporary files
+.tmp/
+
 # Virtual environments
 .venv/
 venv/
