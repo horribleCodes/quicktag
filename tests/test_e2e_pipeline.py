@@ -31,7 +31,7 @@ class FakeMetadataWriter:
         self.written: list[tuple[Path, list[str]]] = []
         FakeMetadataWriter.instances.append(self)
 
-    def __enter__(self) -> FakeMetadataWriter:
+    def __enter__(self) -> "FakeMetadataWriter":
         return self
 
     def __exit__(self, *args: object) -> None:
