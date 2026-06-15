@@ -1,0 +1,69 @@
+---
+description: Release workflow and CI artifact pipeline
+alwaysApply: false
+---
+# Release Flow
+
+QuickTag releases are **artifact-based**: the Release workflow reuses Build artifacts from CI; it does not rebuild binaries.
+
+## Version sources
+
+Keep these in sync before releasing:
+
+- `pyproject.toml` → `[project].version`
+- `src/quicktag/__init__.py` → `__version__`
+
+Use semver: `MAJOR.MINOR.PATCH` (e.g. `0.2.0`).
+
+## Prerequisites
+
+1. Bump version in both files above and merge to `master`.
+2. Wait for the [Build workflow](.github/workflows/build.yml) to succeed on that commit.
+
+Build runs tests, then builds Linux and Windows binaries (PyInstaller via `build.sh` / `build.ps1`). On push to `master`, it uploads artifacts:
+
+- `quicktag-linux` → `dist/linux/quicktag/`
+- `quicktag-windows` → `dist/win/quicktag/`
+
+Artifacts are retained 90 days.
+
+## Creating a release
+
+Use either method (both trigger [.github/workflows/release.yml](.github/workflows/release.yml)):
+
+### Option A — GitHub Actions (recommended)
+
+**Actions → Release → Run workflow**
+
+- Leave `version` blank to read from `pyproject.toml`, or pass an explicit version.
+- Workflow checks out `master`, creates tag `v{version}`, pushes it, and publishes the GitHub Release.
+
+### Option B — Push a tag manually
+
+```bash
+git tag v0.2.0 <commit-sha>
+git push origin v0.2.0
+```
+
+Tag must match `pyproject.toml` version (without the `v` prefix).
+
+## What the Release workflow does
+
+1. Resolves version from input/tag and validates it matches `pyproject.toml`.
+2. Finds a **successful Build run** for that exact commit on `master`.
+3. Downloads `quicktag-linux` and `quicktag-windows` artifacts (no rebuild).
+4. Packages and uploads:
+   - `quicktag-v{version}-linux.tar.gz`
+   - `quicktag-v{version}-windows.zip`
+
+## Failure conditions
+
+Release fails when:
+
+- Version is not valid semver or does not match `pyproject.toml`.
+- No successful Build workflow run exists for the target commit.
+- Tag `v{version}` already exists (workflow_dispatch path only).
+
+## Local builds (not releases)
+
+For local smoke-testing, use `./build.sh` (Linux) or `.\build.ps1` (Windows). See the post-build input copy rule for staging images from `.tmp/input`.
