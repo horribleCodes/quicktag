@@ -1,9 +1,18 @@
 # -*- mode: python ; coding: utf-8 -*-
 
+import sys
 from pathlib import Path
+
+from PyInstaller.utils.hooks import copy_metadata
 
 block_cipher = None
 project_root = Path(SPECPATH)
+sys.path.insert(0, str(project_root / "hooks"))
+from metadata_packages import TRANSFORMERS_RUNTIME_METADATA
+
+package_metadata = []
+for distribution in TRANSFORMERS_RUNTIME_METADATA:
+    package_metadata += copy_metadata(distribution)
 
 a = Analysis(
     [str(project_root / "src" / "quicktag" / "__main__.py")],
@@ -13,12 +22,10 @@ a = Analysis(
         (str(project_root / "assets" / "exiftool"), "exiftool"),
         (str(project_root / "config.example.yaml"), "."),
         (str(project_root / "tags.example.yaml"), "."),
-    ],
-    hiddenimports=[
-        "transformers.models.siglip",
-        "transformers.models.siglip2",
-    ],
-    hookspath=[],
+    ]
+    + package_metadata,
+    hiddenimports=["regex"],
+    hookspath=["hooks"],
     hooksconfig={},
     runtime_hooks=[],
     excludes=[],
@@ -27,7 +34,7 @@ a = Analysis(
     cipher=block_cipher,
     noarchive=False,
     module_collection_mode={
-        "transformers": "pyz+py",
+        "transformers": "py",
     },
 )
 
