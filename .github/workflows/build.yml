@@ -20,6 +20,8 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+          cache: pip
+          cache-dependency-path: pyproject.toml
 
       - name: Install dependencies
         run: |
@@ -42,16 +44,36 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+          cache: pip
+          cache-dependency-path: pyproject.toml
 
-      - name: Build QuickTag
-        shell: pwsh
-        run: ./build.ps1
+      - name: Restore venv cache
+        uses: actions/cache@v4
+        with:
+          path: .venv
+          key: venv-${{ runner.os }}-py311-${{ hashFiles('pyproject.toml') }}-torch-cpu-v1
+
+      - name: Restore PyInstaller build cache
+        uses: actions/cache@v4
+        with:
+          path: build/quicktag
+          key: pyinstaller-${{ runner.os }}-${{ hashFiles('quicktag.spec', 'hooks/**', 'src/quicktag/**') }}-v1
+
+      - name: Restore ExifTool cache
+        uses: actions/cache@v4
+        with:
+          path: assets/exiftool
+          key: exiftool-13.59-v1
 
       - name: Cache Hugging Face model
         uses: actions/cache@v4
         with:
           path: smoke-root/.cache/huggingface
           key: hf-model-google-siglip2-base-patch16-224-v1
+
+      - name: Build QuickTag
+        shell: pwsh
+        run: ./build.ps1
 
       - name: Smoke test frozen binary
         shell: pwsh
@@ -90,18 +112,32 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+          cache: pip
+          cache-dependency-path: pyproject.toml
 
-      - name: Install ExifTool
-        run: sudo apt-get update && sudo apt-get install -y libimage-exiftool-perl
+      - name: Restore venv cache
+        uses: actions/cache@v4
+        with:
+          path: .venv
+          key: venv-${{ runner.os }}-py311-${{ hashFiles('pyproject.toml') }}-torch-cpu-v1
 
-      - name: Build QuickTag
-        run: chmod +x build.sh && ./build.sh
+      - name: Restore PyInstaller build cache
+        uses: actions/cache@v4
+        with:
+          path: build/quicktag
+          key: pyinstaller-${{ runner.os }}-${{ hashFiles('quicktag.spec', 'hooks/**', 'src/quicktag/**') }}-v1
 
       - name: Cache Hugging Face model
         uses: actions/cache@v4
         with:
           path: smoke-root/.cache/huggingface
           key: hf-model-google-siglip2-base-patch16-224-v1
+
+      - name: Install ExifTool
+        run: sudo apt-get update && sudo apt-get install -y libimage-exiftool-perl
+
+      - name: Build QuickTag
+        run: chmod +x build.sh && ./build.sh
 
       - name: Smoke test frozen binary
         run: |
