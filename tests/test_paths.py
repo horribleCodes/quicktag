@@ -10,9 +10,11 @@ from quicktag.paths import (
     _snapshot_has_weights,
     configure_huggingface_cache,
     find_model_in_cache,
+    find_onnx_in_cache,
     get_global_hf_home,
     is_huggingface_cli_installed,
     model_is_cached,
+    onnx_export_dir,
     resolve_hf_cache,
     resolve_onnx_model_dir,
     resolve_path,
@@ -74,7 +76,7 @@ def test_resolve_hf_cache_primary_global_when_cli_present(
         "quicktag.paths.get_local_hf_home", lambda _install, _cache: local_home
     )
     monkeypatch.setattr("quicktag.paths.is_huggingface_cli_installed", lambda: True)
-    monkeypatch.setattr("quicktag.paths.find_model_in_cache", lambda *_args: None)
+    monkeypatch.setattr("quicktag.paths.find_onnx_in_cache", lambda *_args: None)
 
     layout = resolve_hf_cache(tmp_path, ".cache/huggingface", "google/siglip2")
 
@@ -95,7 +97,7 @@ def test_resolve_hf_cache_primary_local_when_cli_absent(
         "quicktag.paths.get_local_hf_home", lambda _install, _cache: local_home
     )
     monkeypatch.setattr("quicktag.paths.is_huggingface_cli_installed", lambda: False)
-    monkeypatch.setattr("quicktag.paths.find_model_in_cache", lambda *_args: None)
+    monkeypatch.setattr("quicktag.paths.find_onnx_in_cache", lambda *_args: None)
 
     layout = resolve_hf_cache(tmp_path, ".cache/huggingface", "google/siglip2")
 
@@ -112,7 +114,7 @@ def test_resolve_hf_cache_loads_from_global_when_only_cached_there(
     global_home = tmp_path / "global-hf"
     local_home = tmp_path / "local-hf"
 
-    def fake_find_model_in_cache(_repo_id: str, hf_home: Path) -> Path | None:
+    def fake_find_onnx_in_cache(_repo_id: str, hf_home: Path) -> Path | None:
         return hf_home if hf_home == global_home else None
 
     monkeypatch.setattr("quicktag.paths.get_global_hf_home", lambda: global_home)
@@ -120,7 +122,7 @@ def test_resolve_hf_cache_loads_from_global_when_only_cached_there(
         "quicktag.paths.get_local_hf_home", lambda _install, _cache: local_home
     )
     monkeypatch.setattr("quicktag.paths.is_huggingface_cli_installed", lambda: False)
-    monkeypatch.setattr("quicktag.paths.find_model_in_cache", fake_find_model_in_cache)
+    monkeypatch.setattr("quicktag.paths.find_onnx_in_cache", fake_find_onnx_in_cache)
 
     layout = resolve_hf_cache(tmp_path, ".cache/huggingface", "google/siglip2")
 
@@ -137,7 +139,7 @@ def test_resolve_hf_cache_loads_from_local_when_only_cached_there(
     global_home = tmp_path / "global-hf"
     local_home = tmp_path / "local-hf"
 
-    def fake_find_model_in_cache(_repo_id: str, hf_home: Path) -> Path | None:
+    def fake_find_onnx_in_cache(_repo_id: str, hf_home: Path) -> Path | None:
         return hf_home if hf_home == local_home else None
 
     monkeypatch.setattr("quicktag.paths.get_global_hf_home", lambda: global_home)
@@ -145,7 +147,7 @@ def test_resolve_hf_cache_loads_from_local_when_only_cached_there(
         "quicktag.paths.get_local_hf_home", lambda _install, _cache: local_home
     )
     monkeypatch.setattr("quicktag.paths.is_huggingface_cli_installed", lambda: True)
-    monkeypatch.setattr("quicktag.paths.find_model_in_cache", fake_find_model_in_cache)
+    monkeypatch.setattr("quicktag.paths.find_onnx_in_cache", fake_find_onnx_in_cache)
 
     layout = resolve_hf_cache(tmp_path, ".cache/huggingface", "google/siglip2")
 
@@ -166,7 +168,7 @@ def test_setup_huggingface_cache_configures_primary_home(
         lambda install, cache: resolve_path(install, cache),
     )
     monkeypatch.setattr("quicktag.paths.is_huggingface_cli_installed", lambda: True)
-    monkeypatch.setattr("quicktag.paths.find_model_in_cache", lambda *_args: None)
+    monkeypatch.setattr("quicktag.paths.find_onnx_in_cache", lambda *_args: None)
     monkeypatch.delenv("HF_HOME", raising=False)
     monkeypatch.delenv("TRANSFORMERS_CACHE", raising=False)
     monkeypatch.delenv("HF_HUB_CACHE", raising=False)
@@ -288,7 +290,7 @@ def test_setup_huggingface_cache_uses_hf_home_layout(tmp_path: Path, monkeypatch
     snapshot = global_home / "models--google--siglip2-base-patch16-224" / "snapshots" / "rev1"
     snapshot.mkdir(parents=True)
     (snapshot / "config.json").write_text("{}", encoding="utf-8")
-    (snapshot / "model.safetensors").write_bytes(b"weights")
+    (snapshot / "model.onnx").write_bytes(b"onnx")
 
     monkeypatch.setattr("quicktag.paths.get_global_hf_home", lambda: global_home)
     monkeypatch.setattr("quicktag.paths.is_huggingface_cli_installed", lambda: True)
@@ -309,7 +311,7 @@ def test_setup_huggingface_cache_prefers_global_cached_model(
     snapshot = global_hub / "models--google--siglip2-base-patch16-224" / "snapshots" / "rev1"
     snapshot.mkdir(parents=True)
     (snapshot / "config.json").write_text("{}", encoding="utf-8")
-    (snapshot / "model.safetensors").write_bytes(b"weights")
+    (snapshot / "model.onnx").write_bytes(b"onnx")
 
     monkeypatch.setattr("quicktag.paths.get_global_hf_home", lambda: global_home)
     monkeypatch.setattr("quicktag.paths.is_huggingface_cli_installed", lambda: True)
@@ -368,3 +370,49 @@ def test_resolve_onnx_model_dir_returns_snapshot(tmp_path: Path, isolate_hf_cach
     (snapshot_dir / "model.onnx").write_bytes(b"onnx")
 
     assert resolve_onnx_model_dir("google/siglip2-base-patch16-224", hf_home) == snapshot_dir.resolve()
+
+
+def test_find_onnx_in_cache_detects_export_dir(tmp_path: Path, isolate_hf_cache_env: None):
+    hf_home = tmp_path / "hf-home"
+    export_dir = onnx_export_dir(hf_home, "google/siglip2-base-patch16-224")
+    export_dir.mkdir(parents=True)
+    (export_dir / "config.json").write_text("{}", encoding="utf-8")
+    (export_dir / "model.onnx").write_bytes(b"onnx")
+
+    assert find_onnx_in_cache("google/siglip2-base-patch16-224", hf_home) == hf_home.resolve()
+
+
+def test_resolve_hf_cache_prefers_local_onnx_export_over_global_pytorch(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, isolate_hf_cache_env: None
+):
+    model_name = "google/siglip2-base-patch16-224"
+    global_home = tmp_path / "global-hf"
+    local_home = tmp_path / "install" / ".cache" / "huggingface"
+
+    pytorch_snapshot = (
+        global_home
+        / "models--google--siglip2-base-patch16-224"
+        / "snapshots"
+        / "pytorch-rev"
+    )
+    pytorch_snapshot.mkdir(parents=True)
+    (pytorch_snapshot / "config.json").write_text("{}", encoding="utf-8")
+    (pytorch_snapshot / "model.safetensors").write_bytes(b"weights")
+
+    export_dir = onnx_export_dir(local_home, model_name)
+    export_dir.mkdir(parents=True)
+    (export_dir / "config.json").write_text("{}", encoding="utf-8")
+    (export_dir / "model.onnx").write_bytes(b"onnx")
+
+    monkeypatch.setattr("quicktag.paths.get_global_hf_home", lambda: global_home)
+    monkeypatch.setattr(
+        "quicktag.paths.get_local_hf_home",
+        lambda install, cache: resolve_path(install, cache),
+    )
+    monkeypatch.setattr("quicktag.paths.is_huggingface_cli_installed", lambda: True)
+
+    layout = resolve_hf_cache(tmp_path / "install", ".cache/huggingface", model_name)
+
+    assert layout.source == "local"
+    assert layout.load_home == local_home.resolve()
+    assert layout.local_files_only is True
