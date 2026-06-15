@@ -6,6 +6,9 @@ dist/
 build/
 .eggs/
 
+# Agent files
+.cursor/plans/
+
 # Temporary files
 .tmp/
 
