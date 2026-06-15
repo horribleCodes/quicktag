@@ -90,7 +90,7 @@ def test_onnx_scores_match_transformers_pipeline(tmp_path: Path):
 
     from quicktag.image_io import load_rgb_image
 
-    fixture = Path(__file__).resolve().parent / "fixtures" / "tiny.png"
+    fixture = Path(__file__).resolve().parent / "fixtures" / "sample.png"
     tags = [
         TagDefinition(label="cat", prompt="a photo of a cat"),
         TagDefinition(label="dog", prompt="a photo of a dog"),
