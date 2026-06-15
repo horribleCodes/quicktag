@@ -4,8 +4,18 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from PIL import Image
+
 from quicktag.scoring import ScoredTag
 from quicktag.tags import TagDefinition
+
+
+def _load_rgb_image(path: Path) -> Image.Image:
+    """Load an image as RGB, handling palette transparency correctly."""
+    with Image.open(path) as img:
+        if img.mode == "P" and isinstance(img.info.get("transparency"), bytes):
+            return img.convert("RGBA").convert("RGB")
+        return img.convert("RGB")
 
 
 class SigLIPTagger:
@@ -36,7 +46,7 @@ class SigLIPTagger:
         prompts = [tag.prompt for tag in tags]
         self._prompt_to_label = {tag.prompt: tag.label for tag in tags}
 
-        results = self._pipe(str(image_path), candidate_labels=prompts)
+        results = self._pipe(_load_rgb_image(image_path), candidate_labels=prompts)
 
         scored: list[ScoredTag] = []
         for item in results:

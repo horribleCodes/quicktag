@@ -32,6 +32,15 @@ def is_multiprocessing_bootstrap_argv(argv: list[str]) -> bool:
     return False
 
 
+def _suppress_transformers_noise(*, verbose: bool) -> None:
+    """Silence transformers config-validation warnings unless --verbose."""
+    if verbose:
+        return
+    from transformers.utils import logging as transformers_logging
+
+    transformers_logging.set_verbosity_error()
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="quicktag",
@@ -73,6 +82,7 @@ def main(argv: list[str] | None = None) -> int:
         level=logging.DEBUG if args.verbose else logging.INFO,
         format="%(levelname)s: %(message)s",
     )
+    _suppress_transformers_noise(verbose=args.verbose)
     log = logging.getLogger("quicktag")
 
     install_dir = get_install_dir(args.root)
