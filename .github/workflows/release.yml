@@ -79,6 +79,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: quicktag-linux
+          path: quicktag-linux
           github-token: ${{ secrets.GITHUB_TOKEN }}
           run-id: ${{ steps.find_run.outputs.run_id }}
 
@@ -86,6 +87,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: quicktag-windows
+          path: quicktag-windows
           github-token: ${{ secrets.GITHUB_TOKEN }}
           run-id: ${{ steps.find_run.outputs.run_id }}
 
