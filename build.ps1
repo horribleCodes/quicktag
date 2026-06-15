@@ -4,34 +4,57 @@ $ErrorActionPreference = "Stop"
 $ProjectRoot = $PSScriptRoot
 Set-Location $ProjectRoot
 
-Write-Host "==> Creating virtual environment"
-python -m venv .venv
 $Python = Join-Path $ProjectRoot ".venv\Scripts\python.exe"
 $Pip = Join-Path $ProjectRoot ".venv\Scripts\pip.exe"
 
-Write-Host "==> Installing PyTorch (CPU) and project dependencies"
-& $Python -m pip install --upgrade pip
-& $Pip install torch --index-url https://download.pytorch.org/whl/cpu
-& $Pip install -e ".[dev]"
+if (-not (Test-Path $Python)) {
+    Write-Host "==> Creating virtual environment"
+    python -m venv .venv
+} else {
+    Write-Host "==> Using existing virtual environment"
+}
 
-Write-Host "==> Downloading ExifTool for Windows"
+$depsOk = $false
+& $Python -c "import torch, PyInstaller" 2>$null
+if ($LASTEXITCODE -eq 0) { $depsOk = $true }
+
+if ($depsOk) {
+    Write-Host "==> Dependencies already installed"
+    & $Pip install -e ".[dev]"
+} else {
+    Write-Host "==> Installing PyTorch (CPU) and project dependencies"
+    & $Python -m pip install --upgrade pip
+    & $Pip install torch --index-url https://download.pytorch.org/whl/cpu
+    & $Pip install -e ".[dev]"
+}
+
 $ExifToolDir = Join-Path $ProjectRoot "assets\exiftool"
 New-Item -ItemType Directory -Force -Path $ExifToolDir | Out-Null
+$ExifToolExe = Join-Path $ExifToolDir "exiftool.exe"
 
-$ExifToolZip = Join-Path $env:TEMP "exiftool-13.59_64.zip"
-$ExifToolUrl = "https://exiftool.org/exiftool-13.59_64.zip"
-Invoke-WebRequest -Uri $ExifToolUrl -OutFile $ExifToolZip
+if (-not (Test-Path $ExifToolExe)) {
+    Write-Host "==> Downloading ExifTool for Windows"
+    $ExifToolZip = Join-Path $env:TEMP "exiftool-13.59_64.zip"
+    $ExifToolUrl = "https://exiftool.org/exiftool-13.59_64.zip"
+    Invoke-WebRequest -Uri $ExifToolUrl -OutFile $ExifToolZip
 
-$ExtractDir = Join-Path $env:TEMP "exiftool-extract"
-if (Test-Path $ExtractDir) { Remove-Item -Recurse -Force $ExtractDir }
-Expand-Archive -Path $ExifToolZip -DestinationPath $ExtractDir
+    $ExtractDir = Join-Path $env:TEMP "exiftool-extract"
+    if (Test-Path $ExtractDir) { Remove-Item -Recurse -Force $ExtractDir }
+    Expand-Archive -Path $ExifToolZip -DestinationPath $ExtractDir
 
-$WinDir = Get-ChildItem -Path $ExtractDir -Directory | Where-Object { $_.Name -like "exiftool-*" } | Select-Object -First 1
-Copy-Item -Path (Join-Path $WinDir.FullName "exiftool(-k).exe") -Destination (Join-Path $ExifToolDir "exiftool.exe") -Force
-Copy-Item -Path (Join-Path $WinDir.FullName "exiftool_files") -Destination $ExifToolDir -Recurse -Force
+    $WinDir = Get-ChildItem -Path $ExtractDir -Directory | Where-Object { $_.Name -like "exiftool-*" } | Select-Object -First 1
+    Copy-Item -Path (Join-Path $WinDir.FullName "exiftool(-k).exe") -Destination $ExifToolExe -Force
+    Copy-Item -Path (Join-Path $WinDir.FullName "exiftool_files") -Destination $ExifToolDir -Recurse -Force
+} else {
+    Write-Host "==> Using cached ExifTool"
+}
 
 Write-Host "==> Building executable with PyInstaller"
-& $Python -m PyInstaller quicktag.spec --distpath dist/win --noconfirm --clean
+$PyInstallerArgs = @("quicktag.spec", "--distpath", "dist/win", "--noconfirm")
+if ($env:CI -ne "true") {
+    $PyInstallerArgs += "--clean"
+}
+& $Python -m PyInstaller @PyInstallerArgs
 
 $DistDir = Join-Path $ProjectRoot "dist\win\quicktag"
 New-Item -ItemType Directory -Force -Path (Join-Path $DistDir "input") | Out-Null

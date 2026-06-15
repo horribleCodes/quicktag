@@ -34,18 +34,31 @@ if ! has_exiftool; then
     echo ""
 fi
 
-echo "==> Creating virtual environment"
-$PYTHON -m venv .venv
+if [[ ! -x .venv/bin/python ]]; then
+    echo "==> Creating virtual environment"
+    $PYTHON -m venv .venv
+else
+    echo "==> Using existing virtual environment"
+fi
 # shellcheck disable=SC1091
 source .venv/bin/activate
 
-echo "==> Installing PyTorch (CPU) and project dependencies"
-pip install --upgrade pip
-pip install torch --index-url https://download.pytorch.org/whl/cpu
-pip install -e ".[dev]"
+if python -c "import torch, PyInstaller" 2>/dev/null; then
+    echo "==> Dependencies already installed"
+    pip install -e ".[dev]"
+else
+    echo "==> Installing PyTorch (CPU) and project dependencies"
+    pip install --upgrade pip
+    pip install torch --index-url https://download.pytorch.org/whl/cpu
+    pip install -e ".[dev]"
+fi
 
 echo "==> Building executable with PyInstaller"
-pyinstaller quicktag.spec --distpath dist/linux --noconfirm --clean
+pyinstaller_args=(quicktag.spec --distpath dist/linux --noconfirm)
+if [[ "${CI:-}" != "true" ]]; then
+    pyinstaller_args+=(--clean)
+fi
+pyinstaller "${pyinstaller_args[@]}"
 
 DIST_DIR="dist/linux/quicktag"
 mkdir -p "$DIST_DIR/input" "$DIST_DIR/output"
