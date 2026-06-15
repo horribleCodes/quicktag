@@ -36,7 +36,11 @@ class MetadataWriter:
             tag_values = tags
 
         write_tags = {field: tag_values for field in self._config.fields}
-        self._et.set_tags([str(image_path)], tags=write_tags)
+        self._et.set_tags(
+            [str(image_path)],
+            tags=write_tags,
+            params=["-overwrite_original"],
+        )
 
     def _merge_existing(self, image_path: Path, new_tags: list[str]) -> list[str]:
         existing: set[str] = set()
