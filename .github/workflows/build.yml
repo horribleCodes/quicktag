@@ -65,11 +65,11 @@ jobs:
           path: assets/exiftool
           key: exiftool-13.59-v1
 
-      - name: Cache ONNX model export
+      - name: Cache ONNX model bundle
         uses: actions/cache@v4
         with:
           path: smoke-root/.cache/huggingface/onnx-export
-          key: onnx-model-google-siglip2-base-patch16-224-v1
+          key: onnx-model-hosted-v2
 
       - name: Build QuickTag
         shell: pwsh
@@ -78,9 +78,9 @@ jobs:
       - name: Prepare ONNX smoke model
         shell: pwsh
         run: |
-          $exportDir = Join-Path $env:GITHUB_WORKSPACE "smoke-root/.cache/huggingface/onnx-export/google--siglip2-base-patch16-224"
-          if (-not (Test-Path (Join-Path $exportDir "model.onnx"))) {
-            .\.venv\Scripts\python.exe scripts/export_onnx_model.py --output $exportDir
+          $bundleDir = Join-Path $env:GITHUB_WORKSPACE "smoke-root/.cache/huggingface/onnx-export/google--siglip2-base-patch16-224"
+          if (-not (Test-Path (Join-Path $bundleDir "model.onnx"))) {
+            .\.venv\Scripts\python.exe scripts/download_onnx_model.py --output $bundleDir
           }
 
       - name: Smoke test frozen binary
@@ -91,12 +91,12 @@ jobs:
           New-Item -ItemType Directory -Force -Path (Join-Path $smoke "output") | Out-Null
           Copy-Item config.example.yaml (Join-Path $smoke "config.yaml") -Force
           Copy-Item tags.example.yaml (Join-Path $smoke "tags.yaml") -Force
-          Copy-Item tests/fixtures/tiny.png (Join-Path $smoke "input/tiny.png") -Force
+          Copy-Item tests/fixtures/sample.png (Join-Path $smoke "input/sample.png") -Force
           $exe = Join-Path $env:GITHUB_WORKSPACE "dist/win/quicktag/quicktag.exe"
           & $exe --help
           & $exe --root $smoke
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          if (-not (Test-Path (Join-Path $smoke "output/tiny.png"))) {
+          if (-not (Test-Path (Join-Path $smoke "output/sample.png"))) {
             Write-Error "Expected tagged output image was not created"
             exit 1
           }
@@ -144,11 +144,11 @@ jobs:
           path: build/quicktag
           key: pyinstaller-${{ runner.os }}-${{ hashFiles('quicktag.spec', 'hooks/**', 'src/quicktag/**') }}-onnx-v1
 
-      - name: Cache ONNX model export
+      - name: Cache ONNX model bundle
         uses: actions/cache@v4
         with:
           path: smoke-root/.cache/huggingface/onnx-export
-          key: onnx-model-google-siglip2-base-patch16-224-v1
+          key: onnx-model-hosted-v2
 
       - name: Install ExifTool
         run: sudo apt-get update && sudo apt-get install -y libimage-exiftool-perl
@@ -158,9 +158,9 @@ jobs:
 
       - name: Prepare ONNX smoke model
         run: |
-          export_dir="smoke-root/.cache/huggingface/onnx-export/google--siglip2-base-patch16-224"
-          if [ ! -f "$export_dir/model.onnx" ]; then
-            .venv/bin/python scripts/export_onnx_model.py --output "$export_dir"
+          bundle_dir="smoke-root/.cache/huggingface/onnx-export/google--siglip2-base-patch16-224"
+          if [ ! -f "$bundle_dir/model.onnx" ]; then
+            .venv/bin/python scripts/download_onnx_model.py --output "$bundle_dir"
           fi
 
       - name: Smoke test frozen binary
@@ -169,10 +169,10 @@ jobs:
           mkdir -p "$smoke/input" "$smoke/output"
           cp config.example.yaml "$smoke/config.yaml"
           cp tags.example.yaml "$smoke/tags.yaml"
-          cp tests/fixtures/tiny.png "$smoke/input/tiny.png"
+          cp tests/fixtures/sample.png "$smoke/input/sample.png"
           ./dist/linux/quicktag/quicktag --help
           ./dist/linux/quicktag/quicktag --root "$smoke"
-          test -f "$smoke/output/tiny.png"
+          test -f "$smoke/output/sample.png"
 
       - name: Report artifact size
         run: du -sh dist/linux/quicktag

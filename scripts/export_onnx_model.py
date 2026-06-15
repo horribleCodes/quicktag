@@ -1,13 +1,18 @@
 #!/usr/bin/env python3
-"""Export SigLIP2 to ONNX for QuickTag inference.
+"""Export SigLIP2 to ONNX for maintainer republishing.
 
 Uses Hugging Face Optimum to export ``google/siglip2-base-patch16-224`` for
 zero-shot image classification. Output includes ``model.onnx`` plus tokenizer
 and preprocessor files needed at runtime.
 
+Normal dev/CI use ``scripts/download_onnx_model.py`` instead. Republish flow:
+
+1. ``python scripts/export_onnx_model.py --output ./onnx-bundle``
+2. Upload the bundle to ``horribleCodes/quicktag-siglip2-onnx`` on Hugging Face.
+
 Example::
 
-    python scripts/export_onnx_model.py --output ./onnx-model
+    python scripts/export_onnx_model.py --output ./onnx-bundle
 """
 
 from __future__ import annotations
