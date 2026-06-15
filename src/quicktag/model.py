@@ -21,15 +21,15 @@ class SigLIPTagger:
         from transformers import pipeline
 
         self._prompt_to_label = {}
-        model_kwargs: dict[str, object] = {"cache_dir": str(hub_cache_dir)}
+        pipe_kwargs: dict[str, object] = {
+            "task": "zero-shot-image-classification",
+            "model": model_name,
+            "device": -1,
+            "model_kwargs": {"cache_dir": str(hub_cache_dir)},
+        }
         if local_files_only:
-            model_kwargs["local_files_only"] = True
-        self._pipe = pipeline(
-            task="zero-shot-image-classification",
-            model=model_name,
-            device=-1,
-            model_kwargs=model_kwargs,
-        )
+            pipe_kwargs["local_files_only"] = True
+        self._pipe = pipeline(**pipe_kwargs)
 
     def score(self, image_path: Path, tags: list[TagDefinition]) -> list[ScoredTag]:
         """Score an image against all candidate tag prompts."""

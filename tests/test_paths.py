@@ -18,6 +18,14 @@ from quicktag.paths import (
 )
 
 
+@pytest.fixture
+def isolate_hf_cache_env(monkeypatch: pytest.MonkeyPatch):
+    """Prevent host HF cache env vars from affecting cache lookup tests."""
+    monkeypatch.delenv("HF_HOME", raising=False)
+    monkeypatch.delenv("HF_HUB_CACHE", raising=False)
+    monkeypatch.delenv("TRANSFORMERS_CACHE", raising=False)
+
+
 def test_resolve_relative_path():
     install = Path("/app/quicktag")
     assert resolve_path(install, "input") == Path("/app/quicktag/input").resolve()
@@ -189,7 +197,9 @@ def _write_cached_model(cache_root: Path, repo_id: str, revision: str) -> None:
     _ = (snapshot_dir / "model.safetensors").write_bytes(b"weights")
 
 
-def test_model_is_cached_detects_commit_hash_snapshot_in_hub(tmp_path: Path):
+def test_model_is_cached_detects_commit_hash_snapshot_in_hub(
+    tmp_path: Path, isolate_hf_cache_env: None
+):
     hf_home = tmp_path / "hf-home"
     _write_cached_model(
         hf_home / "hub",
@@ -203,7 +213,9 @@ def test_model_is_cached_detects_commit_hash_snapshot_in_hub(tmp_path: Path):
     ).resolve()
 
 
-def test_model_is_cached_detects_commit_hash_snapshot_in_hf_home(tmp_path: Path):
+def test_model_is_cached_detects_commit_hash_snapshot_in_hf_home(
+    tmp_path: Path, isolate_hf_cache_env: None
+):
     hf_home = tmp_path / "hf-home"
     _write_cached_model(
         hf_home,
@@ -215,11 +227,13 @@ def test_model_is_cached_detects_commit_hash_snapshot_in_hf_home(tmp_path: Path)
     assert find_model_in_cache("google/siglip2-base-patch16-224", hf_home) == hf_home.resolve()
 
 
-def test_model_is_cached_false_when_repo_missing(tmp_path: Path):
+def test_model_is_cached_false_when_repo_missing(tmp_path: Path, isolate_hf_cache_env: None):
     assert model_is_cached("google/siglip2-base-patch16-224", tmp_path / "hf-home") is False
 
 
-def test_model_is_cached_false_when_snapshot_has_no_config(tmp_path: Path):
+def test_model_is_cached_false_when_snapshot_has_no_config(
+    tmp_path: Path, isolate_hf_cache_env: None
+):
     hf_home = tmp_path / "hf-home"
     snapshot_dir = (
         hf_home
@@ -232,7 +246,9 @@ def test_model_is_cached_false_when_snapshot_has_no_config(tmp_path: Path):
     assert model_is_cached("google/siglip2-base-patch16-224", hf_home) is False
 
 
-def test_model_is_cached_false_when_snapshot_has_config_but_no_weights(tmp_path: Path):
+def test_model_is_cached_false_when_snapshot_has_config_but_no_weights(
+    tmp_path: Path, isolate_hf_cache_env: None
+):
     hf_home = tmp_path / "hf-home"
     snapshot_dir = (
         hf_home
@@ -246,7 +262,7 @@ def test_model_is_cached_false_when_snapshot_has_config_but_no_weights(tmp_path:
     assert model_is_cached("google/siglip2-base-patch16-224", hf_home) is False
 
 
-def test_find_model_in_cache_prefers_hub_subdir(tmp_path: Path):
+def test_find_model_in_cache_prefers_hub_subdir(tmp_path: Path, isolate_hf_cache_env: None):
     model_name = "google/siglip2-base-patch16-224"
     hf_home = tmp_path / "hf"
 
@@ -283,8 +299,9 @@ def test_setup_huggingface_cache_uses_hf_home_layout(tmp_path: Path, monkeypatch
     assert os.environ["HF_HUB_CACHE"] == str(global_home.resolve())
 
 
-def test_setup_huggingface_cache_prefers_global_cached_model(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
-    monkeypatch.delenv("HF_HOME", raising=False)
+def test_setup_huggingface_cache_prefers_global_cached_model(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, isolate_hf_cache_env: None
+):
     global_home = tmp_path / "global-hf"
     global_hub = global_home / "hub"
     snapshot = global_hub / "models--google--siglip2-base-patch16-224" / "snapshots" / "rev1"

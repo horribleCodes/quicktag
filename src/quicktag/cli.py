@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import logging
+import multiprocessing
 import sys
 from pathlib import Path
 
@@ -16,6 +17,19 @@ from quicktag.paths import (
 )
 from quicktag.pipeline import run_pipeline
 from quicktag.tags import load_tags
+
+
+def is_multiprocessing_bootstrap_argv(argv: list[str]) -> bool:
+    """Return True when re-executed as a multiprocessing spawn child."""
+    if not argv:
+        return False
+    if argv[0] in {"-c", "--multiprocessing-fork"}:
+        return True
+    if "-c" in argv:
+        idx = argv.index("-c")
+        if idx + 1 < len(argv) and "multiprocessing" in argv[idx + 1]:
+            return True
+    return False
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -45,6 +59,13 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: list[str] | None = None) -> int:
+    if argv is None:
+        argv = sys.argv[1:]
+
+    if is_multiprocessing_bootstrap_argv(argv):
+        multiprocessing.freeze_support()
+        return 0
+
     parser = build_parser()
     args = parser.parse_args(argv)
 
