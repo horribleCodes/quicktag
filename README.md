@@ -150,7 +150,21 @@ From a Windows machine with Python 3.11 installed:
 
 ExifTool is downloaded and bundled automatically. Output lands in `dist/win/quicktag/`.
 
-GitHub Actions builds both Linux and Windows artifacts on push to `main`.
+GitHub Actions builds both Linux and Windows artifacts on push to `master`.
+
+## Releasing
+
+Version lives in `pyproject.toml` and `src/quicktag/__init__.py` (keep both in sync). Use semver (`MAJOR.MINOR.PATCH`).
+
+1. Bump the version in both files and merge to `master`.
+2. Wait for the [Build workflow](.github/workflows/build.yml) to succeed on that commit.
+3. Create the release using either method:
+   - **Actions → Release → Run workflow** — leave `version` blank to use `pyproject.toml`, or pass an explicit version.
+   - **Push a tag** — `git tag v0.2.0 <commit-sha> && git push origin v0.2.0`
+
+The release workflow downloads Linux and Windows artifacts from that commit's successful Build run (no rebuild). Assets are published as `quicktag-v{version}-linux.tar.gz` and `quicktag-v{version}-windows.zip`.
+
+Release fails if CI did not pass for the commit, or if the tag/input version does not match `pyproject.toml`.
 
 ## License
 
