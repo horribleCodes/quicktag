@@ -19,7 +19,8 @@ def _load_onnx_hook():
 
 def test_hook_includes_onnxruntime():
     hook = _load_onnx_hook()
-    assert any(name.startswith("onnxruntime") for name in hook.hiddenimports)
+    assert "onnxruntime" in hook.hiddenimports
+    assert "onnxruntime.capi._pybind_state" in hook.hiddenimports
 
 
 def test_hook_includes_tokenizers():

@@ -18,18 +18,17 @@ a = Analysis(
     [str(project_root / "src" / "quicktag" / "__main__.py")],
     pathex=[str(project_root / "src")],
     binaries=[],
-    datas=[],
+    datas=package_metadata,
     hiddenimports=["tokenizers", "onnxruntime"],
     hookspath=["hooks"],
     hooksconfig={},
     runtime_hooks=[],
-    excludes=["torch", "transformers"],
+    excludes=["torch", "transformers", "pytest", "sympy", "onnx"],
     win_no_prefer_redirects=False,
     win_private_assemblies=False,
     cipher=block_cipher,
     noarchive=False,
 )
-a.datas += package_metadata
 
 pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
 
