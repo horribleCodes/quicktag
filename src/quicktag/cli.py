@@ -23,19 +23,19 @@ def build_parser() -> argparse.ArgumentParser:
         prog="quicktag",
         description="Tag images using SigLIP2 and write metadata to copies in the output folder.",
     )
-    parser.add_argument(
+    _ = parser.add_argument(
         "--config",
         type=Path,
         default=None,
         help="Path to config.yaml (default: config.yaml beside the executable)",
     )
-    parser.add_argument(
+    _ = parser.add_argument(
         "--root",
         type=Path,
         default=None,
         help="Install root directory for resolving relative paths (dev override)",
     )
-    parser.add_argument(
+    _ = parser.add_argument(
         "-v",
         "--verbose",
         action="store_true",

@@ -56,16 +56,25 @@ def get_local_hf_home(install_dir: Path, cache_dir: str | Path) -> Path:
     return resolve_path(install_dir, cache_dir)
 
 
-def model_is_cached(repo_id: str, hub_cache_dir: Path) -> bool:
-    """Return True when a model snapshot is present in the given hub cache."""
-    from huggingface_hub import try_to_load_from_cache
+def model_is_cached(repo_id: str, hf_home: Path) -> bool:
+    """Return True when a model snapshot is present under an HF cache home directory."""
+    from huggingface_hub.file_download import repo_folder_name
 
-    cached = try_to_load_from_cache(
-        repo_id=repo_id,
-        filename="config.json",
-        cache_dir=str(hub_cache_dir),
-    )
-    return isinstance(cached, str)
+    repo_folder = repo_folder_name(repo_id=repo_id, repo_type="model")
+
+    for cache_root in (hf_home / "hub", hf_home):
+        snapshots_dir = cache_root / repo_folder / "snapshots"
+        if not snapshots_dir.is_dir():
+            continue
+
+        if any(
+            (snapshot / "config.json").is_file()
+            for snapshot in snapshots_dir.iterdir()
+            if snapshot.is_dir()
+        ):
+            return True
+
+    return False
 
 
 def resolve_hf_cache(
@@ -79,7 +88,7 @@ def resolve_hf_cache(
     primary_home = global_home if is_huggingface_cli_installed() else local_home
 
     for source, home in (("global", global_home), ("local", local_home)):
-        if model_is_cached(model_name, home / "hub"):
+        if model_is_cached(model_name, home):
             return HuggingFaceCacheLayout(
                 primary_home=primary_home,
                 load_home=home,

@@ -9,6 +9,7 @@ from quicktag.paths import (
     configure_huggingface_cache,
     get_global_hf_home,
     is_huggingface_cli_installed,
+    model_is_cached,
     resolve_hf_cache,
     resolve_path,
     setup_huggingface_cache,
@@ -95,8 +96,8 @@ def test_resolve_hf_cache_loads_from_global_when_only_cached_there(
     global_home = tmp_path / "global-hf"
     local_home = tmp_path / "local-hf"
 
-    def fake_model_is_cached(_repo_id: str, hub_cache_dir: Path) -> bool:
-        return hub_cache_dir == global_home / "hub"
+    def fake_model_is_cached(_repo_id: str, hf_home: Path) -> bool:
+        return hf_home == global_home
 
     monkeypatch.setattr("quicktag.paths.get_global_hf_home", lambda: global_home)
     monkeypatch.setattr(
@@ -118,8 +119,8 @@ def test_resolve_hf_cache_loads_from_local_when_only_cached_there(
     global_home = tmp_path / "global-hf"
     local_home = tmp_path / "local-hf"
 
-    def fake_model_is_cached(_repo_id: str, hub_cache_dir: Path) -> bool:
-        return hub_cache_dir == local_home / "hub"
+    def fake_model_is_cached(_repo_id: str, hf_home: Path) -> bool:
+        return hf_home == local_home
 
     monkeypatch.setattr("quicktag.paths.get_global_hf_home", lambda: global_home)
     monkeypatch.setattr(
@@ -161,3 +162,55 @@ def test_get_global_hf_home_uses_huggingface_hub_default():
     from huggingface_hub.constants import HF_HUB_CACHE
 
     assert get_global_hf_home() == Path(HF_HUB_CACHE).parent
+
+
+def _write_cached_model(cache_root: Path, repo_id: str, revision: str) -> None:
+    from huggingface_hub.file_download import repo_folder_name
+
+    snapshot_dir = (
+        cache_root
+        / repo_folder_name(repo_id=repo_id, repo_type="model")
+        / "snapshots"
+        / revision
+    )
+    snapshot_dir.mkdir(parents=True)
+    _ = (snapshot_dir / "config.json").write_text("{}", encoding="utf-8")
+
+
+def test_model_is_cached_detects_commit_hash_snapshot_in_hub(tmp_path: Path):
+    hf_home = tmp_path / "hf-home"
+    _write_cached_model(
+        hf_home / "hub",
+        "google/siglip2-base-patch16-224",
+        "75de2d55ec2d0b4efc50b3e9ad70dba96a7b2fa2",
+    )
+
+    assert model_is_cached("google/siglip2-base-patch16-224", hf_home) is True
+
+
+def test_model_is_cached_detects_commit_hash_snapshot_in_hf_home(tmp_path: Path):
+    hf_home = tmp_path / "hf-home"
+    _write_cached_model(
+        hf_home,
+        "google/siglip2-base-patch16-224",
+        "75de2d55ec2d0b4efc50b3e9ad70dba96a7b2fa2",
+    )
+
+    assert model_is_cached("google/siglip2-base-patch16-224", hf_home) is True
+
+
+def test_model_is_cached_false_when_repo_missing(tmp_path: Path):
+    assert model_is_cached("google/siglip2-base-patch16-224", tmp_path / "hf-home") is False
+
+
+def test_model_is_cached_false_when_snapshot_has_no_config(tmp_path: Path):
+    hf_home = tmp_path / "hf-home"
+    snapshot_dir = (
+        hf_home
+        / "models--google--siglip2-base-patch16-224"
+        / "snapshots"
+        / "abc123"
+    )
+    snapshot_dir.mkdir(parents=True)
+
+    assert model_is_cached("google/siglip2-base-patch16-224", hf_home) is False

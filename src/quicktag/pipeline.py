@@ -67,7 +67,7 @@ def run_pipeline(
         return summary
 
     owns_tagger = tagger is None
-    if tagger is None:
+    if owns_tagger:
         logger.info("Loading model %s (first run may download weights)...", config.model.name)
         tagger = SigLIPTagger(config.model.name, cache_dir)
 
