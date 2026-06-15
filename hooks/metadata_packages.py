@@ -1,14 +1,10 @@
 """Distribution names whose metadata must ship in the PyInstaller bundle."""
 
-TRANSFORMERS_RUNTIME_METADATA = [
-    "regex",
-    "packaging",
-    "transformers",
+RUNTIME_METADATA = [
+    "onnxruntime",
     "tokenizers",
     "huggingface-hub",
-    "tqdm",
-    "filelock",
     "numpy",
-    "safetensors",
     "PyYAML",
+    "pillow",
 ]

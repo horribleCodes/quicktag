@@ -17,7 +17,7 @@ quicktag/
 └── README.md           ← this file
 ```
 
-On first run, QuickTag downloads the AI model (~400 MB) into `.cache/huggingface`. You need an internet connection once; later runs work offline.
+On first run, QuickTag downloads the ONNX model (~110 MB) into `.cache/huggingface`. You need an internet connection once; later runs work offline.
 
 ## Prerequisites
 

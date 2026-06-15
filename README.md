@@ -29,7 +29,7 @@ quicktag/
 4. Run `quicktag.exe`.
 5. Find tagged copies in `output/`.
 
-**First run:** SigLIP2 weights (~400 MB) download from Hugging Face into `.cache/huggingface`. An internet connection is required once; later runs work offline.
+**First run:** SigLIP2 ONNX model (~110 MB) downloads from Hugging Face into `.cache/huggingface`. An internet connection is required once; later runs work offline.
 
 ## Configuration reference
 
@@ -114,7 +114,6 @@ Requires Python 3.11+.
 ```bash
 python -m venv .venv
 source .venv/bin/activate   # Windows: .venv\Scripts\activate
-pip install torch --index-url https://download.pytorch.org/whl/cpu
 pip install -e ".[dev]"
 
 cp config.example.yaml config.yaml
@@ -122,7 +121,13 @@ cp tags.example.yaml tags.yaml
 mkdir -p input output
 
 python -m quicktag
-pytest
+pytest -m "not integration"
+```
+
+Export the ONNX model locally (optional, for offline dev):
+
+```bash
+python scripts/export_onnx_model.py --output .cache/huggingface/onnx-export/google--siglip2-base-patch16-224
 ```
 
 On Linux/macOS, install [ExifTool](https://exiftool.org/) and ensure `exiftool` is on `PATH` for metadata writing during development.

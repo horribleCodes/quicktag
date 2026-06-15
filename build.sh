@@ -43,14 +43,20 @@ fi
 # shellcheck disable=SC1091
 source .venv/bin/activate
 
-if python -c "import torch, PyInstaller" 2>/dev/null; then
+if python -c "import onnxruntime, PyInstaller" 2>/dev/null; then
     echo "==> Dependencies already installed"
     pip install -e ".[dev]"
 else
-    echo "==> Installing PyTorch (CPU) and project dependencies"
+    echo "==> Installing project dependencies"
     pip install --upgrade pip
-    pip install torch --index-url https://download.pytorch.org/whl/cpu
     pip install -e ".[dev]"
+fi
+
+if python -c "import torch" 2>/dev/null; then
+    echo ""
+    echo "WARNING: PyTorch is installed in the build venv but is no longer bundled."
+    echo "Remove torch from .venv to avoid accidental PyInstaller inclusion."
+    echo ""
 fi
 
 echo "==> Building executable with PyInstaller"

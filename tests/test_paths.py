@@ -6,6 +6,7 @@ from pathlib import Path
 import pytest
 
 from quicktag.paths import (
+    _snapshot_has_onnx,
     _snapshot_has_weights,
     configure_huggingface_cache,
     find_model_in_cache,
@@ -13,6 +14,7 @@ from quicktag.paths import (
     is_huggingface_cli_installed,
     model_is_cached,
     resolve_hf_cache,
+    resolve_onnx_model_dir,
     resolve_path,
     setup_huggingface_cache,
 )
@@ -327,3 +329,42 @@ def test_snapshot_has_weights_accepts_sharded_files(tmp_path: Path):
     (snapshot / "model-00001-of-00002.safetensors").write_bytes(b"a")
 
     assert _snapshot_has_weights(snapshot) is True
+
+
+def test_snapshot_has_onnx_detects_model_file(tmp_path: Path):
+    snapshot = tmp_path / "snap"
+    snapshot.mkdir()
+    (snapshot / "config.json").write_text("{}", encoding="utf-8")
+    (snapshot / "model.onnx").write_bytes(b"onnx")
+
+    assert _snapshot_has_onnx(snapshot) is True
+
+
+def test_model_is_cached_true_for_onnx_snapshot(tmp_path: Path, isolate_hf_cache_env: None):
+    hf_home = tmp_path / "hf-home"
+    snapshot_dir = (
+        hf_home
+        / "models--google--siglip2-base-patch16-224"
+        / "snapshots"
+        / "onnx-rev"
+    )
+    snapshot_dir.mkdir(parents=True)
+    (snapshot_dir / "config.json").write_text("{}", encoding="utf-8")
+    (snapshot_dir / "model.onnx").write_bytes(b"onnx")
+
+    assert model_is_cached("google/siglip2-base-patch16-224", hf_home) is True
+
+
+def test_resolve_onnx_model_dir_returns_snapshot(tmp_path: Path, isolate_hf_cache_env: None):
+    hf_home = tmp_path / "hf-home"
+    snapshot_dir = (
+        hf_home
+        / "models--google--siglip2-base-patch16-224"
+        / "snapshots"
+        / "onnx-rev"
+    )
+    snapshot_dir.mkdir(parents=True)
+    (snapshot_dir / "config.json").write_text("{}", encoding="utf-8")
+    (snapshot_dir / "model.onnx").write_bytes(b"onnx")
+
+    assert resolve_onnx_model_dir("google/siglip2-base-patch16-224", hf_home) == snapshot_dir.resolve()

@@ -9,7 +9,7 @@ from pathlib import Path
 
 from quicktag.config import AppConfig
 from quicktag.metadata import MetadataWriter
-from quicktag.model import SigLIPTagger
+from quicktag.onnx_tagger import OnnxSigLIPTagger
 from quicktag.paths import HuggingFaceCacheLayout, get_exiftool_path, resolve_path
 from quicktag.scoring import ScoredTag, select_tags
 from quicktag.tags import TagDefinition
@@ -52,7 +52,7 @@ def run_pipeline(
     install_dir: Path,
     hf_cache: HuggingFaceCacheLayout,
     tags: list[TagDefinition],
-    tagger: SigLIPTagger | None = None,
+    tagger: OnnxSigLIPTagger | None = None,
 ) -> PipelineSummary:
     """Process all images from input to output with tagging."""
     input_dir = resolve_path(install_dir, config.paths.input)
@@ -72,9 +72,9 @@ def run_pipeline(
             logger.info("Loading model %s from cache...", config.model.name)
         else:
             logger.info("Loading model %s (first run may download weights)...", config.model.name)
-        tagger = SigLIPTagger(
+        tagger = OnnxSigLIPTagger(
             config.model.name,
-            hf_cache.hub_dir,
+            hf_cache.load_home,
             local_files_only=hf_cache.local_files_only,
         )
 

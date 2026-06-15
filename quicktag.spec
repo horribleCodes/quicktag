@@ -8,35 +8,28 @@ from PyInstaller.utils.hooks import copy_metadata
 block_cipher = None
 project_root = Path(SPECPATH)
 sys.path.insert(0, str(project_root / "hooks"))
-from metadata_packages import TRANSFORMERS_RUNTIME_METADATA
+from metadata_packages import RUNTIME_METADATA
 
 package_metadata = []
-for distribution in TRANSFORMERS_RUNTIME_METADATA:
+for distribution in RUNTIME_METADATA:
     package_metadata += copy_metadata(distribution)
 
 a = Analysis(
     [str(project_root / "src" / "quicktag" / "__main__.py")],
     pathex=[str(project_root / "src")],
     binaries=[],
-    datas=[
-        (str(project_root / "assets" / "exiftool"), "exiftool"),
-        (str(project_root / "config.example.yaml"), "."),
-        (str(project_root / "tags.example.yaml"), "."),
-    ]
-    + package_metadata,
-    hiddenimports=["regex"],
+    datas=[],
+    hiddenimports=["tokenizers", "onnxruntime"],
     hookspath=["hooks"],
     hooksconfig={},
     runtime_hooks=[],
-    excludes=[],
+    excludes=["torch", "transformers"],
     win_no_prefer_redirects=False,
     win_private_assemblies=False,
     cipher=block_cipher,
     noarchive=False,
-    module_collection_mode={
-        "transformers": "py",
-    },
 )
+a.datas += package_metadata
 
 pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
 
@@ -48,7 +41,7 @@ exe = EXE(
     name="quicktag",
     debug=False,
     bootloader_ignore_signals=False,
-    strip=False,
+    strip=True,
     upx=True,
     console=True,
     disable_windowed_traceback=False,
@@ -63,7 +56,7 @@ coll = COLLECT(
     a.binaries,
     a.zipfiles,
     a.datas,
-    strip=False,
+    strip=True,
     upx=True,
     upx_exclude=[],
     name="quicktag",

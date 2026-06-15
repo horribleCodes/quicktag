@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Literal
 
 _WEIGHT_FILENAMES = ("model.safetensors", "pytorch_model.bin")
+_ONNX_FILENAMES = ("model.onnx",)
 
 
 @dataclass(frozen=True)
@@ -70,6 +71,21 @@ def _snapshot_has_weights(snapshot: Path) -> bool:
     return any(snapshot.glob("model-*.safetensors")) or any(snapshot.glob("pytorch_model-*.bin"))
 
 
+def _snapshot_has_onnx(snapshot: Path) -> bool:
+    if not snapshot.is_dir():
+        return False
+    if not (snapshot / "config.json").is_file():
+        return False
+    if any((snapshot / name).is_file() for name in _ONNX_FILENAMES):
+        return True
+    onnx_dir = snapshot / "onnx" / "model.onnx"
+    return onnx_dir.is_file()
+
+
+def _snapshot_is_cached(snapshot: Path) -> bool:
+    return _snapshot_has_weights(snapshot) or _snapshot_has_onnx(snapshot)
+
+
 def _iter_cache_roots(hf_home: Path) -> list[Path]:
     """Return candidate cache roots, preferring HF_HUB_CACHE then HF_HOME/hub then HF_HOME."""
     roots: list[Path] = []
@@ -100,8 +116,25 @@ def find_model_in_cache(repo_id: str, hf_home: Path) -> Path | None:
         snapshots_dir = cache_root / repo_folder / "snapshots"
         if not snapshots_dir.is_dir():
             continue
-        if any(_snapshot_has_weights(child) for child in snapshots_dir.iterdir()):
+        if any(_snapshot_is_cached(child) for child in snapshots_dir.iterdir()):
             return cache_root
+
+    return None
+
+
+def resolve_onnx_model_dir(repo_id: str, hf_home: Path) -> Path | None:
+    """Return the snapshot directory containing ONNX weights, if cached."""
+    from huggingface_hub.file_download import repo_folder_name
+
+    repo_folder = repo_folder_name(repo_id=repo_id, repo_type="model")
+
+    for cache_root in _iter_cache_roots(hf_home):
+        snapshots_dir = cache_root / repo_folder / "snapshots"
+        if not snapshots_dir.is_dir():
+            continue
+        for child in snapshots_dir.iterdir():
+            if _snapshot_has_onnx(child):
+                return child
 
     return None
 

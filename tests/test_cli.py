@@ -52,40 +52,6 @@ def test_main_ignores_multiprocessing_resource_tracker_argv():
     assert main(argv) == 0
 
 
-def test_suppress_transformers_noise_calls_set_verbosity_error(monkeypatch: pytest.MonkeyPatch):
-    called: list[bool] = []
-
-    def fake_set_verbosity_error() -> None:
-        called.append(True)
-
-    monkeypatch.setattr(
-        "transformers.utils.logging.set_verbosity_error",
-        fake_set_verbosity_error,
-    )
-
-    from quicktag.cli import _suppress_transformers_noise
-
-    _suppress_transformers_noise(verbose=False)
-    assert called == [True]
-
-
-def test_suppress_transformers_noise_skipped_when_verbose(monkeypatch: pytest.MonkeyPatch):
-    called: list[bool] = []
-
-    def fake_set_verbosity_error() -> None:
-        called.append(True)
-
-    monkeypatch.setattr(
-        "transformers.utils.logging.set_verbosity_error",
-        fake_set_verbosity_error,
-    )
-
-    from quicktag.cli import _suppress_transformers_noise
-
-    _suppress_transformers_noise(verbose=True)
-    assert called == []
-
-
 def test_main_empty_input_dir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     (tmp_path / "config.yaml").write_text(
         """
