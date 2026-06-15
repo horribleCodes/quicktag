@@ -29,7 +29,7 @@ quicktag/
 4. Run `quicktag.exe`.
 5. Find tagged copies in `output/`.
 
-**First run:** SigLIP2 ONNX model (~110 MB) downloads from Hugging Face into `.cache/huggingface`. An internet connection is required once; later runs work offline.
+**First run:** SigLIP2 ONNX bundle (~110 MB) downloads from [horribleCodes/quicktag-siglip2-onnx](https://huggingface.co/horribleCodes/quicktag-siglip2-onnx) into `.cache/huggingface`. An internet connection is required once; later runs work offline.
 
 ## Configuration reference
 
@@ -121,13 +121,30 @@ cp tags.example.yaml tags.yaml
 mkdir -p input output
 
 python -m quicktag
-pytest -m "not integration"
+pytest
 ```
 
-Export the ONNX model locally (optional, for offline dev):
+Integration tests (model download/export) are opt-in:
 
 ```bash
-python scripts/export_onnx_model.py --output .cache/huggingface/onnx-export/google--siglip2-base-patch16-224
+pytest -m integration
+pytest -m ""    # run everything
+```
+
+Download the ONNX bundle locally (optional, for offline dev):
+
+```bash
+python scripts/download_onnx_model.py \
+  --output .cache/huggingface/onnx-export/google--siglip2-base-patch16-224
+```
+
+### Republishing the ONNX bundle
+
+The PyTorch checkpoint (`google/siglip2-base-patch16-224`) does not ship a fused zero-shot ONNX graph. QuickTag downloads a pre-exported bundle from `horribleCodes/quicktag-siglip2-onnx`. To refresh that hosted repo:
+
+```bash
+python scripts/export_onnx_model.py --output ./onnx-bundle
+huggingface-cli upload horribleCodes/quicktag-siglip2-onnx ./onnx-bundle .
 ```
 
 On Linux/macOS, install [ExifTool](https://exiftool.org/) and ensure `exiftool` is on `PATH` for metadata writing during development.
