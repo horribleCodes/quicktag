@@ -1,5 +1,6 @@
 # Git LFS — images and common raster formats
 *.png filter=lfs diff=lfs merge=lfs -text
+tests/fixtures/** -filter -diff -merge
 *.jpg filter=lfs diff=lfs merge=lfs -text
 *.jpeg filter=lfs diff=lfs merge=lfs -text
 *.gif filter=lfs diff=lfs merge=lfs -text
