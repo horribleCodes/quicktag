@@ -10,7 +10,7 @@ from pathlib import Path
 from quicktag.config import AppConfig
 from quicktag.metadata import MetadataWriter
 from quicktag.model import SigLIPTagger
-from quicktag.paths import get_exiftool_path, resolve_path
+from quicktag.paths import HuggingFaceCacheLayout, get_exiftool_path, resolve_path
 from quicktag.scoring import ScoredTag, select_tags
 from quicktag.tags import TagDefinition
 
@@ -50,7 +50,7 @@ def discover_images(input_dir: Path, extensions: list[str]) -> list[Path]:
 def run_pipeline(
     config: AppConfig,
     install_dir: Path,
-    cache_dir: Path,
+    hf_cache: HuggingFaceCacheLayout,
     tags: list[TagDefinition],
     tagger: SigLIPTagger | None = None,
 ) -> PipelineSummary:
@@ -67,9 +67,16 @@ def run_pipeline(
         return summary
 
     owns_tagger = tagger is None
-    if tagger is None:
-        logger.info("Loading model %s (first run may download weights)...", config.model.name)
-        tagger = SigLIPTagger(config.model.name, cache_dir)
+    if owns_tagger:
+        if hf_cache.local_files_only:
+            logger.info("Loading model %s from cache...", config.model.name)
+        else:
+            logger.info("Loading model %s (first run may download weights)...", config.model.name)
+        tagger = SigLIPTagger(
+            config.model.name,
+            hf_cache.hub_dir,
+            local_files_only=hf_cache.local_files_only,
+        )
 
     exiftool_path = get_exiftool_path(install_dir)
 

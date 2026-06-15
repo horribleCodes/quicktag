@@ -11,15 +11,24 @@ from quicktag.tags import TagDefinition
 class SigLIPTagger:
     """CPU-only SigLIP2 tag scorer."""
 
-    def __init__(self, model_name: str, cache_dir: str | Path) -> None:
+    def __init__(
+        self,
+        model_name: str,
+        hub_cache_dir: str | Path,
+        *,
+        local_files_only: bool = False,
+    ) -> None:
         from transformers import pipeline
 
         self._prompt_to_label = {}
+        model_kwargs: dict[str, object] = {"cache_dir": str(hub_cache_dir)}
+        if local_files_only:
+            model_kwargs["local_files_only"] = True
         self._pipe = pipeline(
             task="zero-shot-image-classification",
             model=model_name,
             device=-1,
-            model_kwargs={"cache_dir": str(cache_dir)},
+            model_kwargs=model_kwargs,
         )
 
     def score(self, image_path: Path, tags: list[TagDefinition]) -> list[ScoredTag]:
