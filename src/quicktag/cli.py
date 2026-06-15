@@ -95,7 +95,7 @@ def main(argv: list[str] | None = None) -> int:
     log.info("Tags: %d candidates from %s", len(tags), tags_path.name)
 
     try:
-        summary = run_pipeline(config, install_dir, hf_cache.load_home, tags)
+        summary = run_pipeline(config, install_dir, hf_cache, tags)
     except FileNotFoundError as exc:
         log.error("%s", exc)
         return 1
