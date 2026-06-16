@@ -17,7 +17,7 @@ quicktag/
 └── README.md           ← this file
 ```
 
-On first run, QuickTag downloads the SigLIP2 ONNX bundle (~110 MB) from Hugging Face (`horribleCodes/quicktag-siglip2-onnx`) into `.cache/huggingface`. You need an internet connection once; later runs work offline.
+On first run, QuickTag downloads the SigLIP2 ONNX bundle (~110 MB) from Hugging Face (`horrible/siglip2-onnx`) into `.cache/huggingface`. You need an internet connection once; later runs work offline.
 
 ## Prerequisites
 
@@ -131,7 +131,7 @@ Only files with listed extensions in `input/` are processed (not subfolders). Wi
 tags_file: tags.yaml   # path to your tag list (relative or absolute)
 
 model:
-  name: google/siglip2-base-patch16-224
+  name: horrible/siglip2-base-patch16-224
   cache_dir: .cache/huggingface
 ```
 
