@@ -1,6 +1,8 @@
 """Tests for path resolution."""
 
 import os
+import sys
+import types
 from pathlib import Path
 
 import pytest
@@ -11,6 +13,7 @@ from quicktag.paths import (
     configure_huggingface_cache,
     find_model_in_cache,
     find_onnx_in_cache,
+    get_exiftool_path,
     get_global_hf_home,
     is_huggingface_cli_installed,
     model_is_cached,
@@ -38,6 +41,47 @@ def test_resolve_relative_path():
 def test_resolve_absolute_path():
     install = Path("/app/quicktag")
     assert resolve_path(install, "/tmp/out") == Path("/tmp/out").resolve()
+
+
+def test_get_exiftool_path_from_install_dir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    install = tmp_path / "install"
+    exiftool = install / "exiftool" / "exiftool"
+    exiftool.parent.mkdir(parents=True)
+    exiftool.write_text("", encoding="utf-8")
+
+    monkeypatch.setattr(
+        "quicktag.paths.sys",
+        types.SimpleNamespace(frozen=False, platform=sys.platform, executable=""),
+    )
+    assert get_exiftool_path(install) == exiftool
+
+
+def test_get_exiftool_path_uses_exe_dir_when_frozen_with_root_override(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    bundle = tmp_path / "dist" / "quicktag"
+    smoke = tmp_path / "smoke-root"
+    bundle.mkdir(parents=True)
+    smoke.mkdir()
+
+    exiftool = bundle / "exiftool" / "exiftool"
+    exiftool.parent.mkdir(parents=True)
+    exiftool.write_text("", encoding="utf-8")
+
+    fake_exe = bundle / "quicktag"
+    fake_exe.write_text("", encoding="utf-8")
+
+    monkeypatch.setattr(
+        "quicktag.paths.sys",
+        types.SimpleNamespace(
+            frozen=True,
+            platform=sys.platform,
+            executable=str(fake_exe),
+            _MEIPASS=None,
+        ),
+    )
+
+    assert get_exiftool_path(smoke) == exiftool
 
 
 def test_configure_huggingface_cache(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
