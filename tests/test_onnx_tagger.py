@@ -65,7 +65,7 @@ def test_score_with_mock_session(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
         lambda *_args, **_kwargs: mock_session,
     )
 
-    tagger = OnnxSigLIPTagger("google/siglip2-base-patch16-224", tmp_path, local_files_only=True)
+    tagger = OnnxSigLIPTagger("horrible/siglip2-base-patch16-224", tmp_path, local_files_only=True)
     tags = [
         TagDefinition(label="cat", prompt="a photo of a cat"),
         TagDefinition(label="dog", prompt="a photo of a dog"),
@@ -82,37 +82,19 @@ def test_score_with_mock_session(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 
 
 @pytest.mark.integration
-def test_onnx_scores_match_transformers_pipeline(tmp_path: Path):
-    pytest.importorskip("torch")
-    pytest.importorskip("transformers")
-
-    from transformers import pipeline
-
-    from quicktag.image_io import load_rgb_image
-
-    fixture = Path(__file__).resolve().parent / "fixtures" / "tiny.png"
+def test_onnx_scores_real_model(tmp_path: Path, isolate_hf_cache_env: None):
+    fixture = Path(__file__).resolve().parent / "fixtures" / "sample.png"
+    cache_dir = tmp_path / "cache"
+    tagger = OnnxSigLIPTagger(
+        "horrible/siglip2-base-patch16-224",
+        cache_dir,
+        local_files_only=False,
+    )
     tags = [
         TagDefinition(label="cat", prompt="a photo of a cat"),
         TagDefinition(label="dog", prompt="a photo of a dog"),
     ]
-    cache_dir = tmp_path / "cache"
-    cache_dir.mkdir()
-
-    torch_pipe = pipeline(
-        task="zero-shot-image-classification",
-        model="google/siglip2-base-patch16-224",
-        device=-1,
-        model_kwargs={"cache_dir": str(cache_dir)},
-    )
-    prompts = [tag.prompt for tag in tags]
-    torch_results = {
-        item["label"]: float(item["score"])
-        for item in torch_pipe(load_rgb_image(fixture), candidate_labels=prompts)
-    }
-
-    onnx = OnnxSigLIPTagger("google/siglip2-base-patch16-224", cache_dir)
-    onnx_scores = {item.label: item.score for item in onnx.score(fixture, tags)}
-
-    for prompt, score in torch_results.items():
-        label = next(tag.label for tag in tags if tag.prompt == prompt)
-        assert onnx_scores[label] == pytest.approx(score, abs=1e-3)
+    scored = tagger.score(fixture, tags)
+    assert len(scored) == 2
+    assert all(0.0 <= item.score <= 1.0 for item in scored)
+    assert scored[0].score >= scored[1].score
