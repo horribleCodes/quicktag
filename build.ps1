@@ -15,17 +15,24 @@ if (-not (Test-Path $Python)) {
 }
 
 $depsOk = $false
-& $Python -c "import torch, PyInstaller" 2>$null
+& $Python -c "import onnxruntime, PyInstaller" 2>$null
 if ($LASTEXITCODE -eq 0) { $depsOk = $true }
 
 if ($depsOk) {
     Write-Host "==> Dependencies already installed"
     & $Pip install -e ".[dev]"
 } else {
-    Write-Host "==> Installing PyTorch (CPU) and project dependencies"
+    Write-Host "==> Installing project dependencies"
     & $Python -m pip install --upgrade pip
-    & $Pip install torch --index-url https://download.pytorch.org/whl/cpu
     & $Pip install -e ".[dev]"
+}
+
+& $Python -c "import torch" 2>$null
+if ($LASTEXITCODE -eq 0) {
+    Write-Host ""
+    Write-Host "WARNING: PyTorch is installed in the build venv but is no longer bundled."
+    Write-Host "Remove torch from .venv to avoid accidental PyInstaller inclusion."
+    Write-Host ""
 }
 
 $ExifToolDir = Join-Path $ProjectRoot "assets\exiftool"

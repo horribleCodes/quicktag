@@ -11,18 +11,22 @@ requires-python = ">=3.11"
 license = { text = "MIT" }
 authors = [{ name = "QuickTag Contributors" }]
 dependencies = [
-    "torch>=2.2.0",
-    "transformers>=4.49.0",
+    "onnxruntime>=1.19.0",
+    "tokenizers>=0.19.0",
     "pillow>=10.0.0",
     "pyyaml>=6.0",
     "PyExifTool>=0.5.6",
     "huggingface_hub>=0.24.0",
+    "numpy>=1.26.0",
 ]
 
 [project.optional-dependencies]
 dev = [
     "pytest>=8.0.0",
     "pyinstaller>=6.0.0",
+]
+onnx = [
+    "onnx>=1.16.0",
 ]
 
 [project.scripts]
@@ -33,3 +37,6 @@ where = ["src"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+markers = [
+    "integration: tests that download models or run heavy inference",
+]

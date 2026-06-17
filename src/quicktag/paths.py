@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Literal
 
 _WEIGHT_FILENAMES = ("model.safetensors", "pytorch_model.bin")
+_ONNX_FILENAMES = ("model.onnx",)
 
 
 @dataclass(frozen=True)
@@ -70,6 +71,21 @@ def _snapshot_has_weights(snapshot: Path) -> bool:
     return any(snapshot.glob("model-*.safetensors")) or any(snapshot.glob("pytorch_model-*.bin"))
 
 
+def _snapshot_has_onnx(snapshot: Path) -> bool:
+    if not snapshot.is_dir():
+        return False
+    if not (snapshot / "config.json").is_file():
+        return False
+    if any((snapshot / name).is_file() for name in _ONNX_FILENAMES):
+        return True
+    onnx_dir = snapshot / "onnx" / "model.onnx"
+    return onnx_dir.is_file()
+
+
+def _snapshot_is_cached(snapshot: Path) -> bool:
+    return _snapshot_has_weights(snapshot) or _snapshot_has_onnx(snapshot)
+
+
 def _iter_cache_roots(hf_home: Path) -> list[Path]:
     """Return candidate cache roots, preferring HF_HUB_CACHE then HF_HOME/hub then HF_HOME."""
     roots: list[Path] = []
@@ -100,8 +116,50 @@ def find_model_in_cache(repo_id: str, hf_home: Path) -> Path | None:
         snapshots_dir = cache_root / repo_folder / "snapshots"
         if not snapshots_dir.is_dir():
             continue
-        if any(_snapshot_has_weights(child) for child in snapshots_dir.iterdir()):
+        if any(_snapshot_is_cached(child) for child in snapshots_dir.iterdir()):
             return cache_root
+
+    return None
+
+
+def onnx_export_dir(hf_home: Path, repo_id: str) -> Path:
+    """Return the install-local ONNX export directory for a model repo."""
+    return hf_home / "onnx-export" / repo_id.replace("/", "--")
+
+
+def find_onnx_in_cache(repo_id: str, hf_home: Path) -> Path | None:
+    """Return the cache root containing ONNX weights or an export, if any."""
+    from huggingface_hub.file_download import repo_folder_name
+
+    repo_folder = repo_folder_name(repo_id=repo_id, repo_type="model")
+
+    for cache_root in _iter_cache_roots(hf_home):
+        snapshots_dir = cache_root / repo_folder / "snapshots"
+        if not snapshots_dir.is_dir():
+            continue
+        if any(_snapshot_has_onnx(child) for child in snapshots_dir.iterdir()):
+            return cache_root
+
+    export_dir = onnx_export_dir(hf_home, repo_id)
+    if export_dir.is_dir() and _snapshot_has_onnx(export_dir):
+        return hf_home
+
+    return None
+
+
+def resolve_onnx_model_dir(repo_id: str, hf_home: Path) -> Path | None:
+    """Return the snapshot directory containing ONNX weights, if cached."""
+    from huggingface_hub.file_download import repo_folder_name
+
+    repo_folder = repo_folder_name(repo_id=repo_id, repo_type="model")
+
+    for cache_root in _iter_cache_roots(hf_home):
+        snapshots_dir = cache_root / repo_folder / "snapshots"
+        if not snapshots_dir.is_dir():
+            continue
+        for child in snapshots_dir.iterdir():
+            if _snapshot_has_onnx(child):
+                return child
 
     return None
 
@@ -122,7 +180,7 @@ def resolve_hf_cache(
     primary_home = global_home if is_huggingface_cli_installed() else local_home
 
     for source, home in (("global", global_home), ("local", local_home)):
-        hub_dir = find_model_in_cache(model_name, home)
+        hub_dir = find_onnx_in_cache(model_name, home)
         if hub_dir is not None:
             return HuggingFaceCacheLayout(
                 primary_home=primary_home,
@@ -183,17 +241,19 @@ def get_exiftool_path(install_dir: Path) -> Path:
     """Locate bundled ExifTool executable."""
     exe_name = "exiftool.exe" if sys.platform == "win32" else "exiftool"
 
+    candidates: list[Path] = []
     if getattr(sys, "frozen", False):
         meipass = getattr(sys, "_MEIPASS", None)
         if meipass:
-            bundled = Path(meipass) / "exiftool" / exe_name
-            if bundled.is_file():
-                return bundled
+            candidates.append(Path(meipass) / "exiftool" / exe_name)
+        candidates.append(Path(sys.executable).resolve().parent / "exiftool" / exe_name)
 
-    candidates = [
-        install_dir / "exiftool" / exe_name,
-        install_dir / "assets" / "exiftool" / exe_name,
-    ]
+    candidates.extend(
+        [
+            install_dir / "exiftool" / exe_name,
+            install_dir / "assets" / "exiftool" / exe_name,
+        ]
+    )
     for candidate in candidates:
         if candidate.is_file():
             return candidate

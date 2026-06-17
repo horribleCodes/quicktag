@@ -3,7 +3,7 @@ paths:
   output: output
 
 model:
-  name: horrible/siglip2-base-patch16-224
+  name: quicktag/smoke-onnx
   cache_dir: .cache/huggingface
 
 scoring:

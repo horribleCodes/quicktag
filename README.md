@@ -1,6 +1,6 @@
 # QuickTag
 
-Batch image tagger for Windows. QuickTag scans a folder of images, scores them against a predefined tag list using [SigLIP2](https://huggingface.co/google/siglip2-base-patch16-224), and writes the selected tags into image metadata. Tagged copies are saved to an output folder; originals are left unchanged.
+Batch image tagger for Windows. QuickTag scans a folder of images, scores them against a predefined tag list using [SigLIP2](https://huggingface.co/horrible/siglip2-base-patch16-224), and writes the selected tags into image metadata. Tagged copies are saved to an output folder; originals are left unchanged.
 
 ## User folder layout
 
@@ -29,7 +29,7 @@ quicktag/
 4. Run `quicktag.exe`.
 5. Find tagged copies in `output/`.
 
-**First run:** SigLIP2 weights (~400 MB) download from Hugging Face into `.cache/huggingface`. An internet connection is required once; later runs work offline.
+**First run:** SigLIP2 ONNX bundle (~1.5 GB) downloads from [horrible/siglip2-base-patch16-224](https://huggingface.co/horrible/siglip2-base-patch16-224) into `.cache/huggingface`. An internet connection is required once; later runs work offline.
 
 ## Configuration reference
 
@@ -41,7 +41,7 @@ paths:
   output: output
 
 model:
-  name: google/siglip2-base-patch16-224
+  name: horrible/siglip2-base-patch16-224
   cache_dir: .cache/huggingface
 
 scoring:
@@ -114,7 +114,6 @@ Requires Python 3.11+.
 ```bash
 python -m venv .venv
 source .venv/bin/activate   # Windows: .venv\Scripts\activate
-pip install torch --index-url https://download.pytorch.org/whl/cpu
 pip install -e ".[dev]"
 
 cp config.example.yaml config.yaml
@@ -123,6 +122,27 @@ mkdir -p input output
 
 python -m quicktag
 pytest
+```
+
+Integration tests (model download) are opt-in:
+
+```bash
+pytest -m integration
+pytest -m ""    # run everything
+```
+
+Download the ONNX bundle locally (optional, for offline dev):
+
+```bash
+python scripts/download_onnx_model.py \
+  --output .cache/huggingface/onnx-export/horrible--siglip2-base-patch16-224
+```
+
+CI build smoke tests use a tiny committed ONNX bundle (`tests/fixtures/onnx-smoke-bundle/`) with `config.smoke.yaml` — no Hugging Face download in the Build workflow. Regenerate the bundle after changing the ONNX I/O contract in `onnx_tagger.py`:
+
+```bash
+pip install -e ".[onnx]"
+python scripts/generate_smoke_onnx_bundle.py
 ```
 
 On Linux/macOS, install [ExifTool](https://exiftool.org/) and ensure `exiftool` is on `PATH` for metadata writing during development.

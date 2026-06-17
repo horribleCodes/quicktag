@@ -29,7 +29,7 @@ jobs:
           pip install -e ".[dev]"
 
       - name: Run tests
-        run: pytest
+        run: pytest -m "not integration"
 
   build-windows:
     runs-on: windows-latest
@@ -51,25 +51,19 @@ jobs:
         uses: actions/cache@v4
         with:
           path: .venv
-          key: venv-${{ runner.os }}-py311-${{ hashFiles('pyproject.toml') }}-torch-cpu-v1
+          key: venv-${{ runner.os }}-py311-${{ hashFiles('pyproject.toml') }}-onnx-v1
 
       - name: Restore PyInstaller build cache
         uses: actions/cache@v4
         with:
           path: build/quicktag
-          key: pyinstaller-${{ runner.os }}-${{ hashFiles('quicktag.spec', 'hooks/**', 'src/quicktag/**') }}-v1
+          key: pyinstaller-${{ runner.os }}-${{ hashFiles('quicktag.spec', 'hooks/**', 'src/quicktag/**') }}-onnx-v1
 
       - name: Restore ExifTool cache
         uses: actions/cache@v4
         with:
           path: assets/exiftool
           key: exiftool-13.59-v1
-
-      - name: Cache Hugging Face model
-        uses: actions/cache@v4
-        with:
-          path: smoke-root/.cache/huggingface
-          key: hf-model-google-siglip2-base-patch16-224-v1
 
       - name: Build QuickTag
         shell: pwsh
@@ -79,19 +73,29 @@ jobs:
         shell: pwsh
         run: |
           $smoke = Join-Path $env:GITHUB_WORKSPACE "smoke-root"
+          $bundleDst = Join-Path $smoke ".cache/huggingface/onnx-export/quicktag--smoke-onnx"
+          New-Item -ItemType Directory -Force -Path $bundleDst | Out-Null
+          Copy-Item -Path (Join-Path $env:GITHUB_WORKSPACE "tests/fixtures/onnx-smoke-bundle/*") -Destination $bundleDst -Recurse -Force
           New-Item -ItemType Directory -Force -Path (Join-Path $smoke "input") | Out-Null
           New-Item -ItemType Directory -Force -Path (Join-Path $smoke "output") | Out-Null
-          Copy-Item config.example.yaml (Join-Path $smoke "config.yaml") -Force
+          Copy-Item config.smoke.yaml (Join-Path $smoke "config.yaml") -Force
           Copy-Item tags.example.yaml (Join-Path $smoke "tags.yaml") -Force
-          Copy-Item tests/fixtures/tiny.png (Join-Path $smoke "input/tiny.png") -Force
+          Copy-Item tests/fixtures/sample.png (Join-Path $smoke "input/sample.png") -Force
           $exe = Join-Path $env:GITHUB_WORKSPACE "dist/win/quicktag/quicktag.exe"
           & $exe --help
           & $exe --root $smoke
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          if (-not (Test-Path (Join-Path $smoke "output/tiny.png"))) {
+          if (-not (Test-Path (Join-Path $smoke "output/sample.png"))) {
             Write-Error "Expected tagged output image was not created"
             exit 1
           }
+
+      - name: Report artifact size
+        shell: pwsh
+        run: |
+          $dist = Join-Path $env:GITHUB_WORKSPACE "dist/win/quicktag"
+          $size = (Get-ChildItem -Path $dist -Recurse -File | Measure-Object -Property Length -Sum).Sum
+          Write-Host "Windows dist size bytes: $size"
 
       - name: Upload artifact
         if: github.event_name == 'push' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main')
@@ -121,19 +125,13 @@ jobs:
         uses: actions/cache@v4
         with:
           path: .venv
-          key: venv-${{ runner.os }}-py311-${{ hashFiles('pyproject.toml') }}-torch-cpu-v1
+          key: venv-${{ runner.os }}-py311-${{ hashFiles('pyproject.toml') }}-onnx-v1
 
       - name: Restore PyInstaller build cache
         uses: actions/cache@v4
         with:
           path: build/quicktag
-          key: pyinstaller-${{ runner.os }}-${{ hashFiles('quicktag.spec', 'hooks/**', 'src/quicktag/**') }}-v1
-
-      - name: Cache Hugging Face model
-        uses: actions/cache@v4
-        with:
-          path: smoke-root/.cache/huggingface
-          key: hf-model-google-siglip2-base-patch16-224-v1
+          key: pyinstaller-${{ runner.os }}-${{ hashFiles('quicktag.spec', 'hooks/**', 'src/quicktag/**') }}-onnx-v1
 
       - name: Install ExifTool
         run: sudo apt-get update && sudo apt-get install -y libimage-exiftool-perl
@@ -144,13 +142,18 @@ jobs:
       - name: Smoke test frozen binary
         run: |
           smoke="$GITHUB_WORKSPACE/smoke-root"
-          mkdir -p "$smoke/input" "$smoke/output"
-          cp config.example.yaml "$smoke/config.yaml"
+          bundle_dst="$smoke/.cache/huggingface/onnx-export/quicktag--smoke-onnx"
+          mkdir -p "$bundle_dst" "$smoke/input" "$smoke/output"
+          cp -r tests/fixtures/onnx-smoke-bundle/. "$bundle_dst/"
+          cp config.smoke.yaml "$smoke/config.yaml"
           cp tags.example.yaml "$smoke/tags.yaml"
-          cp tests/fixtures/tiny.png "$smoke/input/tiny.png"
+          cp tests/fixtures/sample.png "$smoke/input/sample.png"
           ./dist/linux/quicktag/quicktag --help
           ./dist/linux/quicktag/quicktag --root "$smoke"
-          test -f "$smoke/output/tiny.png"
+          test -f "$smoke/output/sample.png"
+
+      - name: Report artifact size
+        run: du -sh dist/linux/quicktag
 
       - name: Upload artifact
         if: github.event_name == 'push' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main')

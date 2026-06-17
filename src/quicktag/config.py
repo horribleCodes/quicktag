@@ -16,7 +16,7 @@ class PathsConfig:
 
 @dataclass
 class ModelConfig:
-    name: str = "google/siglip2-base-patch16-224"
+    name: str = "horrible/siglip2-base-patch16-224"
     cache_dir: str = ".cache/huggingface"
 
 
@@ -76,7 +76,7 @@ def load_config(path: Path) -> AppConfig:
             output=paths_raw.get("output", "output"),
         ),
         model=ModelConfig(
-            name=model_raw.get("name", "google/siglip2-base-patch16-224"),
+            name=model_raw.get("name", "horrible/siglip2-base-patch16-224"),
             cache_dir=model_raw.get("cache_dir", ".cache/huggingface"),
         ),
         scoring=ScoringConfig(
