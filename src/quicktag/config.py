@@ -25,6 +25,8 @@ class ScoringConfig:
     min_score: float = 0.05
     top_k: int | None = 10
     top_p: float | None = 0.9
+    prompt_template: str | None = None
+    prompt_overrides_template: bool = False
 
 
 @dataclass
@@ -83,6 +85,8 @@ def load_config(path: Path) -> AppConfig:
             min_score=float(scoring_raw.get("min_score", 0.05)),
             top_k=scoring_raw.get("top_k", 10),
             top_p=scoring_raw.get("top_p", 0.9),
+            prompt_template=scoring_raw.get("prompt_template"),
+            prompt_overrides_template=bool(scoring_raw.get("prompt_overrides_template", False)),
         ),
         metadata=MetadataConfig(
             fields=list(metadata_raw.get("fields", ["Keywords", "XMP:Subject"])),

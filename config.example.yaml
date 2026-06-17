@@ -10,6 +10,8 @@ scoring:
   min_score: 0.05
   top_k: 10
   top_p: 0.9
+  # prompt_template: "a photo of {tag}"  # optional; placeholders: {tag}, {label}, {prompt}
+  # prompt_overrides_template: true      # optional; explicit tag prompts skip the template
 
 metadata:
   fields: [Keywords, "XMP:Subject"]

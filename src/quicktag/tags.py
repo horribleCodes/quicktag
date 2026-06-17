@@ -12,6 +12,7 @@ import yaml
 class TagDefinition:
     label: str
     prompt: str
+    custom_prompt: bool = False
 
 
 def load_tags(path: Path) -> list[TagDefinition]:
@@ -32,13 +33,16 @@ def load_tags(path: Path) -> list[TagDefinition]:
             label = entry.strip()
             if not label:
                 continue
-            tags.append(TagDefinition(label=label, prompt=label.lower()))
+            tags.append(TagDefinition(label=label, prompt=label.lower(), custom_prompt=False))
         elif isinstance(entry, dict):
             label = str(entry.get("label", "")).strip()
             if not label:
                 raise ValueError(f"Tag entry missing label: {entry!r}")
+            custom_prompt = "prompt" in entry
             prompt = str(entry.get("prompt", label)).strip().lower()
-            tags.append(TagDefinition(label=label, prompt=prompt))
+            tags.append(
+                TagDefinition(label=label, prompt=prompt, custom_prompt=custom_prompt)
+            )
         else:
             raise ValueError(f"Invalid tag entry: {entry!r}")
 
@@ -46,3 +50,26 @@ def load_tags(path: Path) -> list[TagDefinition]:
         raise ValueError(f"No valid tags found in {path}")
 
     return tags
+
+
+def apply_prompt_template(
+    tags: list[TagDefinition],
+    template: str,
+    *,
+    prompt_overrides_template: bool = False,
+) -> list[TagDefinition]:
+    """Format each tag's classification prompt using a config template."""
+    result: list[TagDefinition] = []
+    for tag in tags:
+        if prompt_overrides_template and tag.custom_prompt:
+            result.append(tag)
+            continue
+        try:
+            prompt = template.format(tag=tag.label, label=tag.label, prompt=tag.prompt)
+        except KeyError as exc:
+            raise ValueError(
+                f"Invalid prompt_template placeholder: {exc}. "
+                "Use {{tag}}, {{label}}, or {{prompt}}."
+            ) from exc
+        result.append(TagDefinition(label=tag.label, prompt=prompt.strip().lower()))
+    return result
