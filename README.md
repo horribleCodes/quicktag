@@ -138,6 +138,13 @@ python scripts/download_onnx_model.py \
   --output .cache/huggingface/onnx-export/horrible--siglip2-base-patch16-224
 ```
 
+CI build smoke tests use a tiny committed ONNX bundle (`tests/fixtures/onnx-smoke-bundle/`) with `config.smoke.yaml` — no Hugging Face download in the Build workflow. Regenerate the bundle after changing the ONNX I/O contract in `onnx_tagger.py`:
+
+```bash
+pip install -e ".[onnx]"
+python scripts/generate_smoke_onnx_bundle.py
+```
+
 On Linux/macOS, install [ExifTool](https://exiftool.org/) and ensure `exiftool` is on `PATH` for metadata writing during development.
 
 ## Building
