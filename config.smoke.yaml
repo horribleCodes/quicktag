@@ -1,0 +1,21 @@
+paths:
+  input: input
+  output: output
+
+model:
+  name: quicktag/smoke-onnx
+  cache_dir: .cache/huggingface
+
+scoring:
+  min_score: 0.05
+  top_k: 10
+  top_p: 0.9
+
+metadata:
+  fields: [Keywords, "XMP:Subject"]
+  merge_existing: false
+
+processing:
+  extensions: [jpg, jpeg, png, webp, tiff, tif]
+  preserve_timestamps: true
+  on_error: skip

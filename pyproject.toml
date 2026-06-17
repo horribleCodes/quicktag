@@ -25,6 +25,9 @@ dev = [
     "pytest>=8.0.0",
     "pyinstaller>=6.0.0",
 ]
+onnx = [
+    "onnx>=1.16.0",
+]
 
 [project.scripts]
 quicktag = "quicktag.cli:main"

@@ -5,6 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 
 DEFAULT_ONNX_MODEL_REPO = "horrible/siglip2-base-patch16-224"
+SMOKE_ONNX_MODEL_REPO = "quicktag/smoke-onnx"
 
 _ONNX_BUNDLE_FILES = [
     "config.json",
