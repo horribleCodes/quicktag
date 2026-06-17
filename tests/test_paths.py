@@ -1,6 +1,8 @@
 """Tests for path resolution."""
 
 import os
+import sys
+import types
 from pathlib import Path
 
 import pytest
@@ -11,6 +13,7 @@ from quicktag.paths import (
     configure_huggingface_cache,
     find_model_in_cache,
     find_onnx_in_cache,
+    get_exiftool_path,
     get_global_hf_home,
     is_huggingface_cli_installed,
     model_is_cached,
@@ -38,6 +41,47 @@ def test_resolve_relative_path():
 def test_resolve_absolute_path():
     install = Path("/app/quicktag")
     assert resolve_path(install, "/tmp/out") == Path("/tmp/out").resolve()
+
+
+def test_get_exiftool_path_from_install_dir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    install = tmp_path / "install"
+    exiftool = install / "exiftool" / "exiftool"
+    exiftool.parent.mkdir(parents=True)
+    exiftool.write_text("", encoding="utf-8")
+
+    monkeypatch.setattr(
+        "quicktag.paths.sys",
+        types.SimpleNamespace(frozen=False, platform=sys.platform, executable=""),
+    )
+    assert get_exiftool_path(install) == exiftool
+
+
+def test_get_exiftool_path_uses_exe_dir_when_frozen_with_root_override(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    bundle = tmp_path / "dist" / "quicktag"
+    smoke = tmp_path / "smoke-root"
+    bundle.mkdir(parents=True)
+    smoke.mkdir()
+
+    exiftool = bundle / "exiftool" / "exiftool"
+    exiftool.parent.mkdir(parents=True)
+    exiftool.write_text("", encoding="utf-8")
+
+    fake_exe = bundle / "quicktag"
+    fake_exe.write_text("", encoding="utf-8")
+
+    monkeypatch.setattr(
+        "quicktag.paths.sys",
+        types.SimpleNamespace(
+            frozen=True,
+            platform=sys.platform,
+            executable=str(fake_exe),
+            _MEIPASS=None,
+        ),
+    )
+
+    assert get_exiftool_path(smoke) == exiftool
 
 
 def test_configure_huggingface_cache(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
@@ -78,7 +122,7 @@ def test_resolve_hf_cache_primary_global_when_cli_present(
     monkeypatch.setattr("quicktag.paths.is_huggingface_cli_installed", lambda: True)
     monkeypatch.setattr("quicktag.paths.find_onnx_in_cache", lambda *_args: None)
 
-    layout = resolve_hf_cache(tmp_path, ".cache/huggingface", "google/siglip2")
+    layout = resolve_hf_cache(tmp_path, ".cache/huggingface", "horrible/siglip2")
 
     assert layout.primary_home == global_home
     assert layout.load_home == global_home
@@ -99,7 +143,7 @@ def test_resolve_hf_cache_primary_local_when_cli_absent(
     monkeypatch.setattr("quicktag.paths.is_huggingface_cli_installed", lambda: False)
     monkeypatch.setattr("quicktag.paths.find_onnx_in_cache", lambda *_args: None)
 
-    layout = resolve_hf_cache(tmp_path, ".cache/huggingface", "google/siglip2")
+    layout = resolve_hf_cache(tmp_path, ".cache/huggingface", "horrible/siglip2")
 
     assert layout.primary_home == local_home
     assert layout.load_home == local_home
@@ -124,7 +168,7 @@ def test_resolve_hf_cache_loads_from_global_when_only_cached_there(
     monkeypatch.setattr("quicktag.paths.is_huggingface_cli_installed", lambda: False)
     monkeypatch.setattr("quicktag.paths.find_onnx_in_cache", fake_find_onnx_in_cache)
 
-    layout = resolve_hf_cache(tmp_path, ".cache/huggingface", "google/siglip2")
+    layout = resolve_hf_cache(tmp_path, ".cache/huggingface", "horrible/siglip2")
 
     assert layout.primary_home == local_home
     assert layout.load_home == global_home
@@ -149,7 +193,7 @@ def test_resolve_hf_cache_loads_from_local_when_only_cached_there(
     monkeypatch.setattr("quicktag.paths.is_huggingface_cli_installed", lambda: True)
     monkeypatch.setattr("quicktag.paths.find_onnx_in_cache", fake_find_onnx_in_cache)
 
-    layout = resolve_hf_cache(tmp_path, ".cache/huggingface", "google/siglip2")
+    layout = resolve_hf_cache(tmp_path, ".cache/huggingface", "horrible/siglip2")
 
     assert layout.primary_home == global_home
     assert layout.load_home == local_home
@@ -173,7 +217,7 @@ def test_setup_huggingface_cache_configures_primary_home(
     monkeypatch.delenv("TRANSFORMERS_CACHE", raising=False)
     monkeypatch.delenv("HF_HUB_CACHE", raising=False)
 
-    layout = setup_huggingface_cache(tmp_path, ".cache/huggingface", "google/siglip2")
+    layout = setup_huggingface_cache(tmp_path, ".cache/huggingface", "horrible/siglip2")
 
     assert layout.primary_home == global_home
     assert global_home.is_dir()
@@ -207,12 +251,12 @@ def test_model_is_cached_detects_commit_hash_snapshot_in_hub(
     hf_home = tmp_path / "hf-home"
     _write_cached_model(
         hf_home / "hub",
-        "google/siglip2-base-patch16-224",
+        "horrible/siglip2-base-patch16-224",
         "75de2d55ec2d0b4efc50b3e9ad70dba96a7b2fa2",
     )
 
-    assert model_is_cached("google/siglip2-base-patch16-224", hf_home) is True
-    assert find_model_in_cache("google/siglip2-base-patch16-224", hf_home) == (
+    assert model_is_cached("horrible/siglip2-base-patch16-224", hf_home) is True
+    assert find_model_in_cache("horrible/siglip2-base-patch16-224", hf_home) == (
         hf_home / "hub"
     ).resolve()
 
@@ -223,16 +267,16 @@ def test_model_is_cached_detects_commit_hash_snapshot_in_hf_home(
     hf_home = tmp_path / "hf-home"
     _write_cached_model(
         hf_home,
-        "google/siglip2-base-patch16-224",
+        "horrible/siglip2-base-patch16-224",
         "75de2d55ec2d0b4efc50b3e9ad70dba96a7b2fa2",
     )
 
-    assert model_is_cached("google/siglip2-base-patch16-224", hf_home) is True
-    assert find_model_in_cache("google/siglip2-base-patch16-224", hf_home) == hf_home.resolve()
+    assert model_is_cached("horrible/siglip2-base-patch16-224", hf_home) is True
+    assert find_model_in_cache("horrible/siglip2-base-patch16-224", hf_home) == hf_home.resolve()
 
 
 def test_model_is_cached_false_when_repo_missing(tmp_path: Path, isolate_hf_cache_env: None):
-    assert model_is_cached("google/siglip2-base-patch16-224", tmp_path / "hf-home") is False
+    assert model_is_cached("horrible/siglip2-base-patch16-224", tmp_path / "hf-home") is False
 
 
 def test_model_is_cached_false_when_snapshot_has_no_config(
@@ -241,13 +285,13 @@ def test_model_is_cached_false_when_snapshot_has_no_config(
     hf_home = tmp_path / "hf-home"
     snapshot_dir = (
         hf_home
-        / "models--google--siglip2-base-patch16-224"
+        / "models--horrible--siglip2-base-patch16-224"
         / "snapshots"
         / "abc123"
     )
     snapshot_dir.mkdir(parents=True)
 
-    assert model_is_cached("google/siglip2-base-patch16-224", hf_home) is False
+    assert model_is_cached("horrible/siglip2-base-patch16-224", hf_home) is False
 
 
 def test_model_is_cached_false_when_snapshot_has_config_but_no_weights(
@@ -256,26 +300,26 @@ def test_model_is_cached_false_when_snapshot_has_config_but_no_weights(
     hf_home = tmp_path / "hf-home"
     snapshot_dir = (
         hf_home
-        / "models--google--siglip2-base-patch16-224"
+        / "models--horrible--siglip2-base-patch16-224"
         / "snapshots"
         / "abc123"
     )
     snapshot_dir.mkdir(parents=True)
     (snapshot_dir / "config.json").write_text("{}", encoding="utf-8")
 
-    assert model_is_cached("google/siglip2-base-patch16-224", hf_home) is False
+    assert model_is_cached("horrible/siglip2-base-patch16-224", hf_home) is False
 
 
 def test_find_model_in_cache_prefers_hub_subdir(tmp_path: Path, isolate_hf_cache_env: None):
-    model_name = "google/siglip2-base-patch16-224"
+    model_name = "horrible/siglip2-base-patch16-224"
     hf_home = tmp_path / "hf"
 
-    hub_snapshot = hf_home / "hub" / "models--google--siglip2-base-patch16-224" / "snapshots" / "hub"
+    hub_snapshot = hf_home / "hub" / "models--horrible--siglip2-base-patch16-224" / "snapshots" / "hub"
     hub_snapshot.mkdir(parents=True)
     (hub_snapshot / "config.json").write_text("{}", encoding="utf-8")
     (hub_snapshot / "model.safetensors").write_bytes(b"hub")
 
-    root_snapshot = hf_home / "models--google--siglip2-base-patch16-224" / "snapshots" / "root"
+    root_snapshot = hf_home / "models--horrible--siglip2-base-patch16-224" / "snapshots" / "root"
     root_snapshot.mkdir(parents=True)
     (root_snapshot / "config.json").write_text("{}", encoding="utf-8")
     (root_snapshot / "model.safetensors").write_bytes(b"root")
@@ -287,7 +331,7 @@ def test_setup_huggingface_cache_uses_hf_home_layout(tmp_path: Path, monkeypatch
     monkeypatch.delenv("HF_HOME", raising=False)
     monkeypatch.delenv("HF_HUB_CACHE", raising=False)
     global_home = tmp_path / "global-hf"
-    snapshot = global_home / "models--google--siglip2-base-patch16-224" / "snapshots" / "rev1"
+    snapshot = global_home / "models--horrible--siglip2-base-patch16-224" / "snapshots" / "rev1"
     snapshot.mkdir(parents=True)
     (snapshot / "config.json").write_text("{}", encoding="utf-8")
     (snapshot / "model.onnx").write_bytes(b"onnx")
@@ -295,7 +339,7 @@ def test_setup_huggingface_cache_uses_hf_home_layout(tmp_path: Path, monkeypatch
     monkeypatch.setattr("quicktag.paths.get_global_hf_home", lambda: global_home)
     monkeypatch.setattr("quicktag.paths.is_huggingface_cli_installed", lambda: True)
 
-    layout = setup_huggingface_cache(tmp_path, ".cache/huggingface", "google/siglip2-base-patch16-224")
+    layout = setup_huggingface_cache(tmp_path, ".cache/huggingface", "horrible/siglip2-base-patch16-224")
 
     assert layout.load_home == global_home.resolve()
     assert layout.hub_dir == global_home.resolve()
@@ -308,7 +352,7 @@ def test_setup_huggingface_cache_prefers_global_cached_model(
 ):
     global_home = tmp_path / "global-hf"
     global_hub = global_home / "hub"
-    snapshot = global_hub / "models--google--siglip2-base-patch16-224" / "snapshots" / "rev1"
+    snapshot = global_hub / "models--horrible--siglip2-base-patch16-224" / "snapshots" / "rev1"
     snapshot.mkdir(parents=True)
     (snapshot / "config.json").write_text("{}", encoding="utf-8")
     (snapshot / "model.onnx").write_bytes(b"onnx")
@@ -316,7 +360,7 @@ def test_setup_huggingface_cache_prefers_global_cached_model(
     monkeypatch.setattr("quicktag.paths.get_global_hf_home", lambda: global_home)
     monkeypatch.setattr("quicktag.paths.is_huggingface_cli_installed", lambda: True)
 
-    layout = setup_huggingface_cache(tmp_path, ".cache/huggingface", "google/siglip2-base-patch16-224")
+    layout = setup_huggingface_cache(tmp_path, ".cache/huggingface", "horrible/siglip2-base-patch16-224")
 
     assert layout.load_home == global_home.resolve()
     assert layout.hub_dir == global_hub.resolve()
@@ -346,7 +390,7 @@ def test_model_is_cached_true_for_onnx_snapshot(tmp_path: Path, isolate_hf_cache
     hf_home = tmp_path / "hf-home"
     snapshot_dir = (
         hf_home
-        / "models--google--siglip2-base-patch16-224"
+        / "models--horrible--siglip2-base-patch16-224"
         / "snapshots"
         / "onnx-rev"
     )
@@ -354,14 +398,14 @@ def test_model_is_cached_true_for_onnx_snapshot(tmp_path: Path, isolate_hf_cache
     (snapshot_dir / "config.json").write_text("{}", encoding="utf-8")
     (snapshot_dir / "model.onnx").write_bytes(b"onnx")
 
-    assert model_is_cached("google/siglip2-base-patch16-224", hf_home) is True
+    assert model_is_cached("horrible/siglip2-base-patch16-224", hf_home) is True
 
 
 def test_resolve_onnx_model_dir_returns_snapshot(tmp_path: Path, isolate_hf_cache_env: None):
     hf_home = tmp_path / "hf-home"
     snapshot_dir = (
         hf_home
-        / "models--google--siglip2-base-patch16-224"
+        / "models--horrible--siglip2-base-patch16-224"
         / "snapshots"
         / "onnx-rev"
     )
@@ -369,29 +413,29 @@ def test_resolve_onnx_model_dir_returns_snapshot(tmp_path: Path, isolate_hf_cach
     (snapshot_dir / "config.json").write_text("{}", encoding="utf-8")
     (snapshot_dir / "model.onnx").write_bytes(b"onnx")
 
-    assert resolve_onnx_model_dir("google/siglip2-base-patch16-224", hf_home) == snapshot_dir.resolve()
+    assert resolve_onnx_model_dir("horrible/siglip2-base-patch16-224", hf_home) == snapshot_dir.resolve()
 
 
 def test_find_onnx_in_cache_detects_export_dir(tmp_path: Path, isolate_hf_cache_env: None):
     hf_home = tmp_path / "hf-home"
-    export_dir = onnx_export_dir(hf_home, "google/siglip2-base-patch16-224")
+    export_dir = onnx_export_dir(hf_home, "horrible/siglip2-base-patch16-224")
     export_dir.mkdir(parents=True)
     (export_dir / "config.json").write_text("{}", encoding="utf-8")
     (export_dir / "model.onnx").write_bytes(b"onnx")
 
-    assert find_onnx_in_cache("google/siglip2-base-patch16-224", hf_home) == hf_home.resolve()
+    assert find_onnx_in_cache("horrible/siglip2-base-patch16-224", hf_home) == hf_home.resolve()
 
 
 def test_resolve_hf_cache_prefers_local_onnx_export_over_global_pytorch(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, isolate_hf_cache_env: None
 ):
-    model_name = "google/siglip2-base-patch16-224"
+    model_name = "horrible/siglip2-base-patch16-224"
     global_home = tmp_path / "global-hf"
     local_home = tmp_path / "install" / ".cache" / "huggingface"
 
     pytorch_snapshot = (
         global_home
-        / "models--google--siglip2-base-patch16-224"
+        / "models--horrible--siglip2-base-patch16-224"
         / "snapshots"
         / "pytorch-rev"
     )

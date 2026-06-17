@@ -3,12 +3,12 @@
 
 The fused zero-shot model (``pixel_values`` + ``input_ids`` -> ``logits_per_image``)
 is published separately from the PyTorch checkpoint. Runtime and CI use this script;
-maintainers republish with ``scripts/export_onnx_model.py``.
+maintainers republish from the ``siglip2-base-patch16-224`` repo.
 
 Example::
 
     python scripts/download_onnx_model.py \\
-        --output .cache/huggingface/onnx-export/google--siglip2-base-patch16-224
+        --output .cache/huggingface/onnx-export/horrible--siglip2-base-patch16-224
 """
 
 from __future__ import annotations
@@ -18,7 +18,7 @@ from pathlib import Path
 
 from quicktag.model_onnx import DEFAULT_ONNX_MODEL_REPO, download_onnx_bundle
 
-DEFAULT_MODEL = "google/siglip2-base-patch16-224"
+DEFAULT_MODEL = "horrible/siglip2-base-patch16-224"
 
 
 def main() -> int:

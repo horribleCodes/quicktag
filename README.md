@@ -1,6 +1,6 @@
 # QuickTag
 
-Batch image tagger for Windows. QuickTag scans a folder of images, scores them against a predefined tag list using [SigLIP2](https://huggingface.co/google/siglip2-base-patch16-224), and writes the selected tags into image metadata. Tagged copies are saved to an output folder; originals are left unchanged.
+Batch image tagger for Windows. QuickTag scans a folder of images, scores them against a predefined tag list using [SigLIP2](https://huggingface.co/horrible/siglip2-base-patch16-224), and writes the selected tags into image metadata. Tagged copies are saved to an output folder; originals are left unchanged.
 
 ## User folder layout
 
@@ -29,7 +29,7 @@ quicktag/
 4. Run `quicktag.exe`.
 5. Find tagged copies in `output/`.
 
-**First run:** SigLIP2 ONNX bundle (~110 MB) downloads from [horribleCodes/quicktag-siglip2-onnx](https://huggingface.co/horribleCodes/quicktag-siglip2-onnx) into `.cache/huggingface`. An internet connection is required once; later runs work offline.
+**First run:** SigLIP2 ONNX bundle (~1.5 GB) downloads from [horrible/siglip2-base-patch16-224](https://huggingface.co/horrible/siglip2-base-patch16-224) into `.cache/huggingface`. An internet connection is required once; later runs work offline.
 
 ## Configuration reference
 
@@ -41,7 +41,7 @@ paths:
   output: output
 
 model:
-  name: google/siglip2-base-patch16-224
+  name: horrible/siglip2-base-patch16-224
   cache_dir: .cache/huggingface
 
 scoring:
@@ -124,7 +124,7 @@ python -m quicktag
 pytest
 ```
 
-Integration tests (model download/export) are opt-in:
+Integration tests (model download) are opt-in:
 
 ```bash
 pytest -m integration
@@ -135,16 +135,7 @@ Download the ONNX bundle locally (optional, for offline dev):
 
 ```bash
 python scripts/download_onnx_model.py \
-  --output .cache/huggingface/onnx-export/google--siglip2-base-patch16-224
-```
-
-### Republishing the ONNX bundle
-
-The PyTorch checkpoint (`google/siglip2-base-patch16-224`) does not ship a fused zero-shot ONNX graph. QuickTag downloads a pre-exported bundle from `horribleCodes/quicktag-siglip2-onnx`. To refresh that hosted repo:
-
-```bash
-python scripts/export_onnx_model.py --output ./onnx-bundle
-huggingface-cli upload horribleCodes/quicktag-siglip2-onnx ./onnx-bundle .
+  --output .cache/huggingface/onnx-export/horrible--siglip2-base-patch16-224
 ```
 
 On Linux/macOS, install [ExifTool](https://exiftool.org/) and ensure `exiftool` is on `PATH` for metadata writing during development.

@@ -78,7 +78,7 @@ jobs:
       - name: Prepare ONNX smoke model
         shell: pwsh
         run: |
-          $bundleDir = Join-Path $env:GITHUB_WORKSPACE "smoke-root/.cache/huggingface/onnx-export/google--siglip2-base-patch16-224"
+          $bundleDir = Join-Path $env:GITHUB_WORKSPACE "smoke-root/.cache/huggingface/onnx-export/horrible--siglip2-base-patch16-224"
           if (-not (Test-Path (Join-Path $bundleDir "model.onnx"))) {
             .\.venv\Scripts\python.exe scripts/download_onnx_model.py --output $bundleDir
           }
@@ -158,7 +158,7 @@ jobs:
 
       - name: Prepare ONNX smoke model
         run: |
-          bundle_dir="smoke-root/.cache/huggingface/onnx-export/google--siglip2-base-patch16-224"
+          bundle_dir="smoke-root/.cache/huggingface/onnx-export/horrible--siglip2-base-patch16-224"
           if [ ! -f "$bundle_dir/model.onnx" ]; then
             .venv/bin/python scripts/download_onnx_model.py --output "$bundle_dir"
           fi
