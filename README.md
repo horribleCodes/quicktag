@@ -29,7 +29,7 @@ quicktag/
 4. Run `quicktag.exe`.
 5. Find tagged copies in `output/`.
 
-**First run:** SigLIP2 ONNX bundle (~1.5 GB) downloads from [horrible/siglip2-onnx](https://huggingface.co/horrible/siglip2-onnx) into `.cache/huggingface`. An internet connection is required once; later runs work offline.
+**First run:** SigLIP2 ONNX bundle (~1.5 GB) downloads from [horrible/siglip2-base-patch16-224](https://huggingface.co/horrible/siglip2-base-patch16-224) into `.cache/huggingface`. An internet connection is required once; later runs work offline.
 
 ## Configuration reference
 

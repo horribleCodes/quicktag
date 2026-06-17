@@ -4,8 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-DEFAULT_SIGLIP_MODEL = "horrible/siglip2-base-patch16-224"
-DEFAULT_ONNX_MODEL_REPO = "horrible/siglip2-onnx"
+DEFAULT_ONNX_MODEL_REPO = "horrible/siglip2-base-patch16-224"
 
 _ONNX_BUNDLE_FILES = [
     "config.json",

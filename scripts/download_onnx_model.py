@@ -3,7 +3,7 @@
 
 The fused zero-shot model (``pixel_values`` + ``input_ids`` -> ``logits_per_image``)
 is published separately from the PyTorch checkpoint. Runtime and CI use this script;
-maintainers republish from the ``siglip2-onnx`` repo.
+maintainers republish from the ``siglip2-base-patch16-224`` repo.
 
 Example::
 

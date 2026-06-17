@@ -9,10 +9,9 @@ import pytest
 
 
 def test_download_constants():
-    from quicktag.model_onnx import DEFAULT_ONNX_MODEL_REPO, DEFAULT_SIGLIP_MODEL
+    from quicktag.model_onnx import DEFAULT_ONNX_MODEL_REPO
 
-    assert DEFAULT_SIGLIP_MODEL == "horrible/siglip2-base-patch16-224"
-    assert DEFAULT_ONNX_MODEL_REPO == "horrible/siglip2-onnx"
+    assert DEFAULT_ONNX_MODEL_REPO == "horrible/siglip2-base-patch16-224"
 
 
 def test_download_onnx_bundle_writes_model(tmp_path: Path):
