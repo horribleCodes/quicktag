@@ -99,7 +99,7 @@ def test_score_passes_pil_image_without_user_warning(
         lambda *_args, **_kwargs: mock_session,
     )
 
-    tagger = OnnxSigLIPTagger("google/siglip2-base-patch16-224", tmp_path, local_files_only=True)
+    tagger = OnnxSigLIPTagger("horrible/siglip2-base-patch16-224", tmp_path, local_files_only=True)
 
     with warnings.catch_warnings(record=True) as caught:
         warnings.simplefilter("always")

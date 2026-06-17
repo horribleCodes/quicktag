@@ -3,7 +3,7 @@ paths:
   output: output
 
 model:
-  name: google/siglip2-base-patch16-224
+  name: horrible/siglip2-base-patch16-224
   cache_dir: .cache/huggingface
 
 scoring:
