@@ -79,3 +79,22 @@ def test_score_with_mock_session(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     assert len(scored) == 2
     assert all(isinstance(item, ScoredTag) for item in scored)
     assert scored[0].score >= scored[1].score
+
+
+@pytest.mark.integration
+def test_onnx_scores_real_model(tmp_path: Path, isolate_hf_cache_env: None):
+    fixture = Path(__file__).resolve().parent / "fixtures" / "sample.png"
+    cache_dir = tmp_path / "cache"
+    tagger = OnnxSigLIPTagger(
+        "horrible/siglip2-base-patch16-224",
+        cache_dir,
+        local_files_only=False,
+    )
+    tags = [
+        TagDefinition(label="cat", prompt="a photo of a cat"),
+        TagDefinition(label="dog", prompt="a photo of a dog"),
+    ]
+    scored = tagger.score(fixture, tags)
+    assert len(scored) == 2
+    assert all(0.0 <= item.score <= 1.0 for item in scored)
+    assert scored[0].score >= scored[1].score

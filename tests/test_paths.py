@@ -25,14 +25,6 @@ from quicktag.paths import (
 )
 
 
-@pytest.fixture
-def isolate_hf_cache_env(monkeypatch: pytest.MonkeyPatch):
-    """Prevent host HF cache env vars from affecting cache lookup tests."""
-    monkeypatch.delenv("HF_HOME", raising=False)
-    monkeypatch.delenv("HF_HUB_CACHE", raising=False)
-    monkeypatch.delenv("TRANSFORMERS_CACHE", raising=False)
-
-
 def test_resolve_relative_path():
     install = Path("/app/quicktag")
     assert resolve_path(install, "input") == Path("/app/quicktag/input").resolve()

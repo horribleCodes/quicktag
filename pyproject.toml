@@ -34,7 +34,6 @@ where = ["src"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "-m 'not integration'"
 markers = [
     "integration: tests that download models or run heavy inference",
 ]
