@@ -12,20 +12,12 @@ from PIL import Image
 from tokenizers import Tokenizer
 
 from quicktag.image_io import load_rgb_image
-from quicktag.paths import resolve_onnx_model_dir
+from quicktag.model_onnx import download_onnx_bundle
+from quicktag.paths import onnx_export_dir, resolve_onnx_model_dir
 from quicktag.scoring import ScoredTag
 from quicktag.tags import TagDefinition
 
 DEFAULT_MAX_LENGTH = 64
-_ONNX_ALLOW_PATTERNS = [
-    "config.json",
-    "preprocessor_config.json",
-    "tokenizer.json",
-    "tokenizer_config.json",
-    "special_tokens_map.json",
-    "model.onnx",
-    "onnx/*",
-]
 
 
 def _sigmoid(value: float) -> float:
@@ -96,7 +88,7 @@ def _ensure_onnx_snapshot(
     if cached is not None:
         return cached
 
-    export_dir = cache_home / "onnx-export" / model_name.replace("/", "--")
+    export_dir = onnx_export_dir(cache_home, model_name)
     if export_dir.is_dir():
         try:
             _find_model_onnx(export_dir)
@@ -109,46 +101,8 @@ def _ensure_onnx_snapshot(
             f"ONNX model {model_name!r} not found in cache: {hub_cache_dir}"
         )
 
-    from huggingface_hub import snapshot_download
-
-    snapshot_download(
-        repo_id=model_name,
-        cache_dir=str(cache_home),
-        local_files_only=False,
-        allow_patterns=_ONNX_ALLOW_PATTERNS,
-    )
-
-    cached = resolve_onnx_model_dir(model_name, cache_home)
-    if cached is not None:
-        return cached
-
-    exported = _try_export_onnx_model(model_name, cache_home)
-    if exported is not None:
-        return exported
-
-    raise FileNotFoundError(
-        f"Could not locate ONNX weights for {model_name!r} under {hub_cache_dir}. "
-        "Run scripts/export_onnx_model.py with dev dependencies installed."
-    )
-
-
-def _try_export_onnx_model(model_name: str, cache_home: Path) -> Path | None:
-    try:
-        import importlib.util
-        import sys
-
-        script = Path(__file__).resolve().parents[2] / "scripts" / "export_onnx_model.py"
-        spec = importlib.util.spec_from_file_location("export_onnx_model", script)
-        if spec is None or spec.loader is None:
-            return None
-        module = importlib.util.module_from_spec(spec)
-        sys.modules[spec.name] = module
-        spec.loader.exec_module(module)
-        export_dir = cache_home / "onnx-export" / model_name.replace("/", "--")
-        module.export_onnx_model(export_dir, model_name=model_name)
-        return export_dir
-    except Exception:
-        return None
+    download_onnx_bundle(export_dir)
+    return export_dir
 
 
 class OnnxSigLIPTagger:
