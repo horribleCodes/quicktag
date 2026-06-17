@@ -8,13 +8,22 @@ from exiftool import ExifToolHelper
 
 from quicktag.config import MetadataConfig
 
+_CHARSET_PARAMS = [
+    "-charset",
+    "exif=UTF8",
+    "-charset",
+    "iptc=UTF8",
+    "-charset",
+    "filename=utf8",
+]
+
 
 class MetadataWriter:
     """Apply keyword tags to image files using ExifTool."""
 
     def __init__(self, exiftool_path: Path, config: MetadataConfig) -> None:
         self._config = config
-        self._et = ExifToolHelper(executable=str(exiftool_path))
+        self._et = ExifToolHelper(executable=str(exiftool_path), encoding="utf-8")
         self._et.__enter__()
 
     def close(self) -> None:
@@ -39,12 +48,14 @@ class MetadataWriter:
         self._et.set_tags(
             [str(image_path)],
             tags=write_tags,
-            params=["-overwrite_original"],
+            params=["-overwrite_original", *_CHARSET_PARAMS],
         )
 
     def _merge_existing(self, image_path: Path, new_tags: list[str]) -> list[str]:
         existing: set[str] = set()
-        for record in self._et.get_tags([str(image_path)], tags=self._config.fields):
+        for record in self._et.get_tags(
+            [str(image_path)], tags=self._config.fields, params=_CHARSET_PARAMS
+        ):
             for field in self._config.fields:
                 value = record.get(field)
                 if value is None:
