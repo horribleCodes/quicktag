@@ -13,7 +13,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--model",
-        default="google/siglip2-base-patch16-224",
+        default="horrible/siglip2-base-patch16-224",
         help="Hugging Face model repo id",
     )
     parser.add_argument(

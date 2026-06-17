@@ -241,17 +241,19 @@ def get_exiftool_path(install_dir: Path) -> Path:
     """Locate bundled ExifTool executable."""
     exe_name = "exiftool.exe" if sys.platform == "win32" else "exiftool"
 
+    candidates: list[Path] = []
     if getattr(sys, "frozen", False):
         meipass = getattr(sys, "_MEIPASS", None)
         if meipass:
-            bundled = Path(meipass) / "exiftool" / exe_name
-            if bundled.is_file():
-                return bundled
+            candidates.append(Path(meipass) / "exiftool" / exe_name)
+        candidates.append(Path(sys.executable).resolve().parent / "exiftool" / exe_name)
 
-    candidates = [
-        install_dir / "exiftool" / exe_name,
-        install_dir / "assets" / "exiftool" / exe_name,
-    ]
+    candidates.extend(
+        [
+            install_dir / "exiftool" / exe_name,
+            install_dir / "assets" / "exiftool" / exe_name,
+        ]
+    )
     for candidate in candidates:
         if candidate.is_file():
             return candidate
