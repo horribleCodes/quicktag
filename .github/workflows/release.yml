@@ -76,7 +76,7 @@ jobs:
           echo "run_id=$run_id" >> "$GITHUB_OUTPUT"
 
       - name: Download Linux artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: quicktag-linux
           path: quicktag-linux
@@ -84,7 +84,7 @@ jobs:
           run-id: ${{ steps.find_run.outputs.run_id }}
 
       - name: Download Windows artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: quicktag-windows
           path: quicktag-windows
