@@ -17,7 +17,7 @@ quicktag/
 └── README.md           ← this file
 ```
 
-On first run, QuickTag downloads the SigLIP2 ONNX bundle (~110 MB) from Hugging Face (`horrible/siglip2-onnx`) into `.cache/huggingface`. You need an internet connection once; later runs work offline.
+On first run, QuickTag downloads the SigLIP2 ONNX bundle (~1.5 GB) from Hugging Face (`horrible/siglip2-onnx`) into `.cache/huggingface`. You need an internet connection once; later runs work offline.
 
 ## Prerequisites
 
