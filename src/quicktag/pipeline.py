@@ -13,7 +13,8 @@ from tqdm import tqdm
 from quicktag.config import AppConfig
 from quicktag.metadata import MetadataWriter
 from quicktag.onnx_tagger import OnnxSigLIPTagger
-from quicktag.paths import HuggingFaceCacheLayout, get_exiftool_path, resolve_path
+from quicktag.exiftool_setup import get_exiftool_path
+from quicktag.paths import HuggingFaceCacheLayout, resolve_path
 from quicktag.scoring import ScoredTag, select_tags
 from quicktag.tags import TagDefinition
 

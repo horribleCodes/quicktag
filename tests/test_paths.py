@@ -7,13 +7,13 @@ from pathlib import Path
 
 import pytest
 
+from quicktag.exiftool_setup import get_exiftool_path
 from quicktag.paths import (
     _snapshot_has_onnx,
     _snapshot_has_weights,
     configure_huggingface_cache,
     find_model_in_cache,
     find_onnx_in_cache,
-    get_exiftool_path,
     get_global_hf_home,
     is_huggingface_cli_installed,
     model_is_cached,

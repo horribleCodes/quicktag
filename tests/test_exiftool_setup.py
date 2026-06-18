@@ -9,11 +9,11 @@ from pathlib import Path
 
 import pytest
 
+from quicktag.exiftool_setup import get_exiftool_path
 from quicktag.exiftool_setup import (
     ExifToolSetupError,
     ensure_exiftool,
     find_exiftool,
-    get_exiftool_path,
 )
 
 
