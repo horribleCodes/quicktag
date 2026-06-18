@@ -9,7 +9,10 @@ Keep these files and folders together in the same directory:
 ```
 quicktag/
 ├── quicktag.exe
-├── exiftool/           ← bundled metadata writer (do not delete)
+├── _internal/          ← bundled libraries (do not delete)
+├── exiftool/           ← created on first run if missing
+│   ├── exiftool.exe
+│   └── exiftool_files/
 ├── input/              ← put your images here
 ├── output/             ← tagged copies appear here
 ├── tags.yaml           ← tags to detect
@@ -18,6 +21,10 @@ quicktag/
 ```
 
 On first run, QuickTag downloads the SigLIP2 ONNX bundle (~1.5 GB) from Hugging Face (`horrible/siglip2-base-patch16-224`) into `.cache/huggingface`. You need an internet connection once; later runs work offline.
+
+If the Hugging Face CLI (`hf`) is installed, QuickTag prefers your global Hugging Face cache and reuses models already downloaded there.
+
+On first run, QuickTag also downloads ExifTool into `exiftool/` when it is missing (requires internet). If the download fails, install ExifTool manually from https://exiftool.org and place `exiftool.exe` and `exiftool_files/` next to `quicktag.exe`.
 
 ## Quick start
 
@@ -90,36 +97,34 @@ scoring:
   prompt_template: "a photo of {tag}"
 ```
 
-With `prompt_overrides_template: true` (the default), tags that define an explicit `prompt` keep that text as-is; simple string tags still use the template. Set `prompt_overrides_template: false` to run the template over every tag, including those with custom prompts.
-
-Per-tag control is also available:
+The default for `prompt_overrides_template` is `false`. When `false`, the template applies to every tag, including those with custom prompts. Set it to `true` so tags with an explicit `prompt` keep that text as-is (simple string tags still use the template). Per-tag `override: true` also skips the template for that tag's custom prompt.
 
 ```yaml
-# Assuming config.yml
-# scoring:
-#   prompt_template: "a photo of {prompt}"
-#   prompt_overrides_template: false
+# prompt_overrides_template: false
+scoring:
+  prompt_template: "a photo of {prompt}"
+  prompt_overrides_template: false
 tags:
-  - person                       # "a photo of person"
-  - label: feline                # "a photo of a cat"
-    prompt: "a cat"
-  - label: dog                   # "contains dog
+  - person                    # "a photo of person"
+  - label: feline
+    prompt: "a cat"           # "a photo of a cat"
+  - label: dog
     prompt: "contains dogs"
-    override: true
+    override: true            # "contains dogs"
 ```
 
 ```yaml
-# Assuming config.yml
-# scoring:
-#   prompt_template: "a photo of {prompt}"
-#   prompt_overrides_template: true
+# prompt_overrides_template: true
+scoring:
+  prompt_template: "a photo of {prompt}"
+  prompt_overrides_template: true
 tags:
-  - person                       # "a photo of person"
-  - label: feline                # "a cat"
-    prompt: "a cat"
-  - label: dog                   # "contains dog
+  - person                     # "a photo of person"
+  - label: feline
+    prompt: "a cat"            # "a cat"
+  - label: dog
     prompt: "contains dogs"
-    override: true
+    override: true             # "contains dogs"
 ```
 
 ### Metadata
@@ -158,12 +163,13 @@ model:
 ```
 quicktag.exe                     use config.yaml in this folder
 quicktag.exe --config other.yaml use a different config file
-quicktag.exe -v                  verbose logging
+quicktag.exe -v                  verbose logging and per-image tag output
+quicktag.exe -q                  warnings only
+quicktag.exe -qq                 warnings only, no progress bar
 ```
 
 ## Supported formats
 
-Supports the following formats:
 - JPEG
 - PNG
 - WebP
@@ -175,8 +181,8 @@ Supports the following formats:
 |---------|-------------|
 | No tags applied | Lower `min_score` in `config.yaml`, or improve prompts in `tags.yaml` |
 | Too many tags | Raise `min_score`, lower `top_k`, or lower `top_p` |
-| First run is slow | The model is downloading; wait for it to finish |
-| "ExifTool not found" | Ensure the `exiftool/` folder is next to `quicktag.exe` |
+| First run is slow | The model and/or ExifTool may be downloading; wait for it to finish |
+| "ExifTool not found" | Re-run with internet so QuickTag can download it, or install manually into `exiftool/` |
 
 ## Exit codes
 
