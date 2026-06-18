@@ -5,6 +5,13 @@ on:
     branches: [main, master, release]
   pull_request:
     branches: [main, master, release]
+    paths:
+      - "src/"
+      - "hooks/"
+      - "pyproject.toml"
+      - "quicktag.spec"
+      - "build.sh"
+      - "build.ps1"
   workflow_dispatch:
 
 concurrency:
