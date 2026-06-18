@@ -14,7 +14,7 @@ from pathlib import Path
 logger = logging.getLogger(__name__)
 
 EXIFTOOL_VERSION = "13.59"
-EXIFTOOL_WINDOWS_ZIP_URL = f"https://exiftool.org/exiftool-{EXIFTOOL_VERSION}_64.zip"
+EXIFTOOL_WINDOWS_ZIP_URL = f"https://sourceforge.net/projects/exiftool/files/exiftool-{EXIFTOOL_VERSION}_64.zip/download"
 
 
 class ExifToolSetupError(Exception):
@@ -73,7 +73,7 @@ def _windows_install_hint(install_dir: Path) -> str:
     exiftool_dir = install_dir / "exiftool"
     return (
         "Install ExifTool manually:\n"
-        "  1. Download from https://exiftool.org/install.html\n"
+        "  1. Download from https://exiftool.org\n"
         f"  2. Place exiftool.exe and exiftool_files/ in {exiftool_dir}\n"
         "  3. Or install ExifTool system-wide so the exiftool command is on PATH"
     )
