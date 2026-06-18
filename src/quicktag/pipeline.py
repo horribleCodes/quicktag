@@ -4,8 +4,11 @@ from __future__ import annotations
 
 import logging
 import shutil
+import sys
 from dataclasses import dataclass, field
 from pathlib import Path
+
+from tqdm import tqdm
 
 from quicktag.config import AppConfig
 from quicktag.metadata import MetadataWriter
@@ -53,6 +56,8 @@ def run_pipeline(
     hf_cache: HuggingFaceCacheLayout,
     tags: list[TagDefinition],
     tagger: OnnxSigLIPTagger | None = None,
+    *,
+    show_progress: bool = True,
 ) -> PipelineSummary:
     """Process all images from input to output with tagging."""
     input_dir = resolve_path(install_dir, config.paths.input)
@@ -80,12 +85,24 @@ def run_pipeline(
 
     exiftool_path = get_exiftool_path(install_dir)
 
+    use_progress = show_progress and sys.stderr.isatty()
+    progress = tqdm(
+        images,
+        desc="Tagging",
+        unit="image",
+        disable=not use_progress,
+        file=sys.stderr,
+    )
+
     try:
         with MetadataWriter(exiftool_path, config.metadata) as writer:
-            for image_path in images:
+            for image_path in progress:
                 summary.processed += 1
                 dest_path = output_dir / image_path.name
                 result = FileResult(source=image_path, destination=dest_path)
+
+                if use_progress:
+                    progress.set_postfix_str(image_path.name, refresh=False)
 
                 try:
                     _copy_image(image_path, dest_path, config.processing.preserve_timestamps)
@@ -95,15 +112,20 @@ def run_pipeline(
 
                     writer.write_tags(dest_path, [item.label for item in selected])
                     summary.succeeded += 1
-                    logger.info(
-                        "%s -> %s",
-                        image_path.name,
-                        ", ".join(f"{t.label} ({t.score:.3f})" for t in selected) or "(no tags)",
-                    )
+                    if not use_progress:
+                        tag_summary = (
+                            ", ".join(f"{t.label} ({t.score:.3f})" for t in selected)
+                            or "(no tags)"
+                        )
+                        logger.info("%s -> %s", image_path.name, tag_summary)
                 except Exception as exc:
                     result.error = str(exc)
                     summary.failed += 1
-                    logger.error("Failed to process %s: %s", image_path.name, exc)
+                    message = f"Failed to process {image_path.name}: {exc}"
+                    if use_progress:
+                        tqdm.write(message, file=sys.stderr)
+                    else:
+                        logger.error("%s", message)
                     if config.processing.on_error == "fail":
                         raise
 

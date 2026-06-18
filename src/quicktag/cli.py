@@ -51,10 +51,17 @@ def build_parser() -> argparse.ArgumentParser:
         help="Install root directory for resolving relative paths (dev override)",
     )
     _ = parser.add_argument(
+        "-q",
+        "--quiet",
+        action="count",
+        default=0,
+        help="Reduce output (-q: warnings only, -qq: also hide progress bar)",
+    )
+    _ = parser.add_argument(
         "-v",
         "--verbose",
         action="store_true",
-        help="Enable debug logging",
+        help="Enable debug logging and per-image tag output",
     )
     return parser
 
@@ -70,8 +77,15 @@ def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
 
+    if args.verbose:
+        log_level = logging.DEBUG
+    elif args.quiet >= 1:
+        log_level = logging.WARNING
+    else:
+        log_level = logging.INFO
+
     logging.basicConfig(
-        level=logging.DEBUG if args.verbose else logging.INFO,
+        level=log_level,
         format="%(levelname)s: %(message)s",
     )
     log = logging.getLogger("quicktag")
@@ -129,8 +143,16 @@ def main(argv: list[str] | None = None) -> int:
     log.info("Output: %s", resolve_path(install_dir, config.paths.output))
     log.info("Tags: %d candidates from %s", len(tags), tags_path.name)
 
+    show_progress = not args.verbose and args.quiet < 2
+
     try:
-        summary = run_pipeline(config, install_dir, hf_cache, tags)
+        summary = run_pipeline(
+            config,
+            install_dir,
+            hf_cache,
+            tags,
+            show_progress=show_progress,
+        )
     except FileNotFoundError as exc:
         log.error("%s", exc)
         return 1
@@ -140,12 +162,14 @@ def main(argv: list[str] | None = None) -> int:
             log.exception("Details:")
         return 1
 
-    log.info(
-        "Done: %d processed, %d succeeded, %d failed",
-        summary.processed,
-        summary.succeeded,
-        summary.failed,
+    done_message = (
+        f"Done: {summary.processed} processed, "
+        f"{summary.succeeded} succeeded, {summary.failed} failed"
     )
+    if args.quiet >= 1:
+        print(done_message, file=sys.stderr)
+    else:
+        log.info("%s", done_message)
 
     if summary.failed > 0 and config.processing.on_error == "skip":
         return 2
