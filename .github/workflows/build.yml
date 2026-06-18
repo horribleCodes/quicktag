@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           lfs: true
 
@@ -39,7 +39,7 @@ jobs:
     needs: test
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           lfs: true
 
@@ -51,13 +51,13 @@ jobs:
           cache-dependency-path: pyproject.toml
 
       - name: Restore venv cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: .venv
           key: venv-${{ runner.os }}-py311-${{ hashFiles('pyproject.toml') }}-onnx-v1
 
       - name: Restore PyInstaller build cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: build/quicktag
           key: pyinstaller-${{ runner.os }}-${{ hashFiles('quicktag.spec', 'hooks/**', 'src/quicktag/**') }}-onnx-v1
@@ -107,7 +107,7 @@ jobs:
     needs: test
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           lfs: true
 
@@ -119,13 +119,13 @@ jobs:
           cache-dependency-path: pyproject.toml
 
       - name: Restore venv cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: .venv
           key: venv-${{ runner.os }}-py311-${{ hashFiles('pyproject.toml') }}-onnx-v1
 
       - name: Restore PyInstaller build cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: build/quicktag
           key: pyinstaller-${{ runner.os }}-${{ hashFiles('quicktag.spec', 'hooks/**', 'src/quicktag/**') }}-onnx-v1
