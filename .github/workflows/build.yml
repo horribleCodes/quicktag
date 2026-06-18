@@ -62,12 +62,6 @@ jobs:
           path: build/quicktag
           key: pyinstaller-${{ runner.os }}-${{ hashFiles('quicktag.spec', 'hooks/**', 'src/quicktag/**') }}-onnx-v1
 
-      - name: Restore ExifTool cache
-        uses: actions/cache@v4
-        with:
-          path: assets/exiftool
-          key: exiftool-13.59-v1
-
       - name: Build QuickTag
         shell: pwsh
         run: ./build.ps1
