@@ -15,6 +15,15 @@ def test_build_parser_help():
     assert exc_info.value.code == 0
 
 
+def test_build_parser_quiet_levels():
+    parser = build_parser()
+    assert parser.parse_args([]).quiet == 0
+    assert parser.parse_args(["-q"]).quiet == 1
+    assert parser.parse_args(["-qq"]).quiet == 2
+    assert parser.parse_args(["-q", "-q"]).quiet == 2
+    assert parser.parse_args(["--quiet", "--quiet"]).quiet == 2
+
+
 def test_main_help_exits_zero():
     with pytest.raises(SystemExit) as exc_info:
         main(["--help"])
@@ -91,3 +100,36 @@ paths:
     monkeypatch.setattr("quicktag.cli.ensure_exiftool", raise_setup_error)
 
     assert main(["--root", str(tmp_path)]) == 1
+
+
+def test_main_qq_disables_progress(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys):
+    (tmp_path / "config.yaml").write_text(
+        """
+paths:
+  input: input
+  output: output
+""",
+        encoding="utf-8",
+    )
+    (tmp_path / "tags.yaml").write_text("tags:\n  - cat\n", encoding="utf-8")
+    (tmp_path / "input").mkdir()
+    (tmp_path / "output").mkdir()
+    monkeypatch.setattr("quicktag.paths.is_huggingface_cli_installed", lambda: False)
+    monkeypatch.setattr(
+        "quicktag.cli.ensure_exiftool",
+        lambda _install: Path("/usr/bin/exiftool"),
+    )
+
+    captured: list[bool] = []
+
+    def fake_run_pipeline(*args, show_progress: bool = True, **kwargs):
+        captured.append(show_progress)
+        from quicktag.pipeline import PipelineSummary
+
+        return PipelineSummary()
+
+    monkeypatch.setattr("quicktag.cli.run_pipeline", fake_run_pipeline)
+
+    assert main(["--root", str(tmp_path), "-qq"]) == 0
+    assert captured == [False]
+    assert "Done: 0 processed" in capsys.readouterr().err
