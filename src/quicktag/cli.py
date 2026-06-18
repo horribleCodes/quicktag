@@ -9,6 +9,7 @@ import sys
 from pathlib import Path
 
 from quicktag.config import load_config
+from quicktag.exiftool_setup import ExifToolSetupError, ensure_exiftool
 from quicktag.paths import (
     get_install_dir,
     is_huggingface_cli_installed,
@@ -95,6 +96,13 @@ def main(argv: list[str] | None = None) -> int:
             )
     except (FileNotFoundError, ValueError) as exc:
         log.error("%s", exc)
+        return 1
+
+    try:
+        ensure_exiftool(install_dir)
+    except ExifToolSetupError as exc:
+        log.error("%s", exc)
+        log.error("%s", exc.install_hint)
         return 1
 
     hf_cache = setup_huggingface_cache(

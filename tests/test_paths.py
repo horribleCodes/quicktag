@@ -42,9 +42,10 @@ def test_get_exiftool_path_from_install_dir(tmp_path: Path, monkeypatch: pytest.
     exiftool.write_text("", encoding="utf-8")
 
     monkeypatch.setattr(
-        "quicktag.paths.sys",
+        "quicktag.exiftool_setup.sys",
         types.SimpleNamespace(frozen=False, platform=sys.platform, executable=""),
     )
+    monkeypatch.setattr("quicktag.exiftool_setup.shutil.which", lambda _name: None)
     assert get_exiftool_path(install) == exiftool
 
 
@@ -64,7 +65,7 @@ def test_get_exiftool_path_uses_exe_dir_when_frozen_with_root_override(
     fake_exe.write_text("", encoding="utf-8")
 
     monkeypatch.setattr(
-        "quicktag.paths.sys",
+        "quicktag.exiftool_setup.sys",
         types.SimpleNamespace(
             frozen=True,
             platform=sys.platform,
@@ -72,6 +73,7 @@ def test_get_exiftool_path_uses_exe_dir_when_frozen_with_root_override(
             _MEIPASS=None,
         ),
     )
+    monkeypatch.setattr("quicktag.exiftool_setup.shutil.which", lambda _name: None)
 
     assert get_exiftool_path(smoke) == exiftool
 

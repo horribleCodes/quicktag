@@ -5,6 +5,7 @@ from pathlib import Path
 import pytest
 
 from quicktag.cli import build_parser, is_multiprocessing_bootstrap_argv, main
+from quicktag.exiftool_setup import ExifToolSetupError
 
 
 def test_build_parser_help():
@@ -65,5 +66,28 @@ paths:
     (tmp_path / "input").mkdir()
     (tmp_path / "output").mkdir()
     monkeypatch.setattr("quicktag.paths.is_huggingface_cli_installed", lambda: False)
+    monkeypatch.setattr(
+        "quicktag.cli.ensure_exiftool",
+        lambda _install: Path("/usr/bin/exiftool"),
+    )
 
     assert main(["--root", str(tmp_path)]) == 0
+
+
+def test_main_exiftool_setup_error_exits_one(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    (tmp_path / "config.yaml").write_text(
+        """
+paths:
+  input: input
+  output: output
+""",
+        encoding="utf-8",
+    )
+    (tmp_path / "tags.yaml").write_text("tags:\n  - cat\n", encoding="utf-8")
+
+    def raise_setup_error(_install: Path) -> Path:
+        raise ExifToolSetupError("ExifTool not found.", "Install exiftool manually.")
+
+    monkeypatch.setattr("quicktag.cli.ensure_exiftool", raise_setup_error)
+
+    assert main(["--root", str(tmp_path)]) == 1

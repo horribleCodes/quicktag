@@ -14,8 +14,8 @@ PYTHON=$(command -v python3 || command -v python)
 
 has_exiftool() {
     command -v exiftool &>/dev/null \
-        || [[ -x assets/exiftool/exiftool ]] \
-        || [[ -f assets/exiftool/exiftool && -d assets/exiftool/lib ]]
+        || [[ -x ./exiftool/exiftool ]] \
+        || [[ -f ./exiftool/exiftool && -d ./exiftool/lib ]]
 }
 
 if ! has_exiftool; then
@@ -28,36 +28,20 @@ if ! has_exiftool; then
     echo "  Fedora:            sudo dnf install perl-Image-ExifTool"
     echo "  macOS:             brew install exiftool"
     echo ""
-    echo "Or follow https://exiftool.org/install.html"
+    echo "Or follow https://exiftool.org"
     echo ""
     echo "Continuing the build — metadata writing will fail at runtime without ExifTool."
     echo ""
 fi
 
-if [[ ! -x .venv/bin/python ]]; then
-    echo "==> Creating virtual environment"
-    $PYTHON -m venv .venv
-else
-    echo "==> Using existing virtual environment"
-fi
+echo "==> Creating virtual environment"
+$PYTHON -m venv .venv
+
 # shellcheck disable=SC1091
 source .venv/bin/activate
 
-if python -c "import onnxruntime, PyInstaller" 2>/dev/null; then
-    echo "==> Dependencies already installed"
-    pip install -e ".[dev]"
-else
-    echo "==> Installing project dependencies"
-    pip install --upgrade pip
-    pip install -e ".[dev]"
-fi
-
-if python -c "import torch" 2>/dev/null; then
-    echo ""
-    echo "WARNING: PyTorch is installed in the build venv but is no longer bundled."
-    echo "Remove torch from .venv to avoid accidental PyInstaller inclusion."
-    echo ""
-fi
+pip install --upgrade pip
+pip install -e ".[dev]"
 
 echo "==> Building executable with PyInstaller"
 pyinstaller_args=(quicktag.spec --distpath dist/linux --noconfirm)
@@ -71,9 +55,5 @@ mkdir -p "$DIST_DIR/input" "$DIST_DIR/output"
 cp config.example.yaml "$DIST_DIR/config.yaml"
 cp tags.example.yaml "$DIST_DIR/tags.yaml"
 cp docs/DIST_README_LINUX.md "$DIST_DIR/README.md"
-
-if [[ -d assets/exiftool ]] && [[ -n "$(ls -A assets/exiftool 2>/dev/null)" ]]; then
-    cp -r assets/exiftool "$DIST_DIR/exiftool"
-fi
 
 echo "==> Build complete: $DIST_DIR"

@@ -237,31 +237,4 @@ def setup_huggingface_cache(
     return layout
 
 
-def get_exiftool_path(install_dir: Path) -> Path:
-    """Locate bundled ExifTool executable."""
-    exe_name = "exiftool.exe" if sys.platform == "win32" else "exiftool"
-
-    candidates: list[Path] = []
-    if getattr(sys, "frozen", False):
-        meipass = getattr(sys, "_MEIPASS", None)
-        if meipass:
-            candidates.append(Path(meipass) / "exiftool" / exe_name)
-        candidates.append(Path(sys.executable).resolve().parent / "exiftool" / exe_name)
-
-    candidates.extend(
-        [
-            install_dir / "exiftool" / exe_name,
-            install_dir / "assets" / "exiftool" / exe_name,
-        ]
-    )
-    for candidate in candidates:
-        if candidate.is_file():
-            return candidate
-
-    system_exiftool = shutil.which("exiftool")
-    if system_exiftool:
-        return Path(system_exiftool)
-
-    raise FileNotFoundError(
-        f"ExifTool not found. Expected {exe_name} under {install_dir / 'exiftool'}"
-    )
+from quicktag.exiftool_setup import get_exiftool_path  # noqa: E402
