@@ -1,5 +1,11 @@
 tags:
   - cat
   - dog
-  - landscape
-  - portrait
+  - label: flower
+    prompt: a flower
+  - label: red
+    prompt: a primarily red image
+    override: true
+  - label: wildlife
+    prompt: "animals in the wild"
+    override: true  # replace the template with the prompt

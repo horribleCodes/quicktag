@@ -48,6 +48,8 @@ scoring:
   min_score: 0.05       # ignore tags below this probability
   top_k: 10             # max tags per image (null = no limit)
   top_p: 0.9            # nucleus cutoff on normalized scores (null = disabled)
+  prompt_template: "a photo of {tag}"  # placeholders: {tag}, {label}, {prompt}
+  prompt_overrides_template: false      # if "true": explicit prompts on a tag skip the template
 
 metadata:
   fields: [Keywords, "XMP:Subject"]
@@ -77,11 +79,59 @@ With custom prompts (improves accuracy):
 ```yaml
 tags:
   - label: cat
-    prompt: "a photo of a cat"
-  - dog
+    prompt: "a cat"
+  - label: close-up
+    prompt: "a close-up photo"
+    override: true
 ```
 
 Prompts are lowercased automatically (SigLIP2 expects lowercase text).
+
+#### Prompt templates
+
+Set `scoring.prompt_template` in `config.yaml` to wrap every tag prompt in a shared format before classification. Placeholders:
+
+- `{tag}` / `{label}` — the tag label
+- `{prompt}` — the tag's base prompt (label lowercased, or the explicit `prompt` field)
+
+Example:
+
+```yaml
+scoring:
+  prompt_template: "a photo of {tag}"
+```
+
+With `prompt_overrides_template: true` (the default), tags that define an explicit `prompt` keep that text as-is; simple string tags still use the template. Set `prompt_overrides_template: false` to run the template over every tag, including those with custom prompts.
+
+Per-tag control is also available:
+
+```yaml
+# Assuming config.yml
+# scoring:
+#   prompt_template: "a photo of {prompt}"
+#   prompt_overrides_template: false
+tags:
+  - person                       # "a photo of person"
+  - label: feline                # "a photo of a cat"
+    prompt: "a cat"
+  - label: dog                   # "contains dog
+    prompt: "contains dogs"
+    override: true
+```
+
+```yaml
+# Assuming config.yml
+# scoring:
+#   prompt_template: "a photo of {prompt}"
+#   prompt_overrides_template: true
+tags:
+  - person                       # "a photo of person"
+  - label: feline                # "a cat"
+    prompt: "a cat"
+  - label: dog                   # "contains dog
+    prompt: "contains dogs"
+    override: true
+```
 
 ### Scoring
 

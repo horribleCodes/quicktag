@@ -7,9 +7,11 @@ model:
   cache_dir: .cache/huggingface
 
 scoring:
-  min_score: 0.05
+  min_score: 0.001
   top_k: 10
   top_p: 0.9
+  prompt_template: "a photo of {tag}"  # placeholders: {tag}, {label}, {prompt}
+  prompt_overrides_template: false      # if "true": explicit prompts on a tag skip the template
 
 metadata:
   fields: [Keywords, "XMP:Subject"]

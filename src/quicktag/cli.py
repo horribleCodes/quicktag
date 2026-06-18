@@ -17,7 +17,7 @@ from quicktag.paths import (
     setup_huggingface_cache,
 )
 from quicktag.pipeline import run_pipeline
-from quicktag.tags import load_tags
+from quicktag.tags import apply_prompt_template, load_tags
 
 
 def is_multiprocessing_bootstrap_argv(argv: list[str]) -> bool:
@@ -88,6 +88,12 @@ def main(argv: list[str] | None = None) -> int:
     tags_path = resolve_path(install_dir, config.tags_file)
     try:
         tags = load_tags(tags_path)
+        if config.scoring.prompt_template:
+            tags = apply_prompt_template(
+                tags,
+                config.scoring.prompt_template,
+                prompt_overrides_template=config.scoring.prompt_overrides_template,
+            )
     except (FileNotFoundError, ValueError) as exc:
         log.error("%s", exc)
         return 1
