@@ -37,23 +37,14 @@ Progress is printed to the console: each file shows the tags applied and their c
 
 This file lists every tag QuickTag may apply. Only tags from this list are considered — the AI does not invent new ones.
 
-**Simple list:**
-
 ```yaml
 tags:
-  - cat
-  - dog
-  - landscape
-  - portrait
-```
-
-**With custom prompts** (often more accurate):
-
-```yaml
-tags:
+  - person
+  - label: woman
   - label: cat
     prompt: "a photo of a cat"
   - dog
+  # ...
 ```
 
 When you use the short form (`- dog`), the prompt defaults to the tag name. Prompts are lowercased automatically.
@@ -84,6 +75,52 @@ scoring:
 Tags must pass `min_score` first, then `top_p` selects the smallest set whose combined weight reaches the threshold, and `top_k` caps the final count.
 
 Lower `min_score` applies more tags; raise it to be more selective.
+
+### Prompt templates
+
+Set `scoring.prompt_template` in `config.yaml` to wrap every tag prompt in a shared format before classification. Supports placeholders:
+
+- `{tag}` / `{label}` — the tag label
+- `{prompt}` — the tag's base prompt (`prompt` field, or label lowercased if missing)
+
+Example:
+
+```yaml
+scoring:
+  prompt_template: "a photo of {tag}"
+```
+
+With `prompt_overrides_template: true` (the default), tags that define an explicit `prompt` keep that text as-is; simple string tags still use the template. Set `prompt_overrides_template: false` to run the template over every tag, including those with custom prompts.
+
+Per-tag control is also available:
+
+```yaml
+# Assuming config.yml
+# scoring:
+#   prompt_template: "a photo of {prompt}"
+#   prompt_overrides_template: false
+tags:
+  - person                       # "a photo of person"
+  - label: feline                # "a photo of a cat"
+    prompt: "a cat"
+  - label: dog                   # "contains dog
+    prompt: "contains dogs"
+    override: true
+```
+
+```yaml
+# Assuming config.yml
+# scoring:
+#   prompt_template: "a photo of {prompt}"
+#   prompt_overrides_template: true
+tags:
+  - person                       # "a photo of person"
+  - label: feline                # "a cat"
+    prompt: "a cat"
+  - label: dog                   # "contains dog
+    prompt: "contains dogs"
+    override: true
+```
 
 ### Metadata
 
@@ -126,7 +163,11 @@ quicktag.exe -v                  verbose logging
 
 ## Supported formats
 
-JPEG, PNG, WebP, and TIFF are supported in v1.
+Supports the following formats:
+- JPEG
+- PNG
+- WebP
+- TIFF
 
 ## Troubleshooting
 
