@@ -95,6 +95,48 @@ def test_load_tags_without_explicit_prompt(tmp_path: Path):
     assert tags[0].custom_prompt is False
 
 
+def test_load_config_prompt_template_default_override(tmp_path: Path):
+    config_file = tmp_path / "config.yaml"
+    config_file.write_text(
+        """
+scoring:
+  prompt_template: "a photo of {tag}"
+""",
+        encoding="utf-8",
+    )
+    config = load_config(config_file)
+    assert config.scoring.prompt_overrides_template is True
+
+
+def test_load_tags_override(tmp_path: Path):
+    tags_file = tmp_path / "tags.yaml"
+    tags_file.write_text(
+        "tags:\n  - label: dog\n    prompt: canine portrait\n    override: true\n",
+        encoding="utf-8",
+    )
+    tags = load_tags(tags_file)
+    assert tags[0].override is True
+
+
+def test_apply_prompt_template_per_tag_override():
+    tags = [
+        TagDefinition(label="cat", prompt="a cat", custom_prompt=True),
+        TagDefinition(
+            label="dog",
+            prompt="canine portrait",
+            custom_prompt=True,
+            override=True,
+        ),
+    ]
+    result = apply_prompt_template(
+        tags,
+        "a photo of {prompt}",
+        prompt_overrides_template=False,
+    )
+    assert result[0].prompt == "a photo of a cat"
+    assert result[1].prompt == "canine portrait"
+
+
 def test_apply_prompt_template_prompt_overrides_template():
     tags = [
         TagDefinition(label="cat", prompt="cat", custom_prompt=False),

@@ -13,6 +13,7 @@ class TagDefinition:
     label: str
     prompt: str
     custom_prompt: bool = False
+    override: bool = False
 
 
 def load_tags(path: Path) -> list[TagDefinition]:
@@ -33,16 +34,25 @@ def load_tags(path: Path) -> list[TagDefinition]:
             label = entry.strip()
             if not label:
                 continue
-            tags.append(TagDefinition(label=label, prompt=label.lower(), custom_prompt=False))
+            tags.append(TagDefinition(
+                label=label,
+                prompt=label.lower(),
+                custom_prompt=False,
+                override=False
+            ))
         elif isinstance(entry, dict):
             label = str(entry.get("label", "")).strip()
             if not label:
                 raise ValueError(f"Tag entry missing label: {entry!r}")
             custom_prompt = "prompt" in entry
+            override = entry.get("override", False)
             prompt = str(entry.get("prompt", label)).strip().lower()
-            tags.append(
-                TagDefinition(label=label, prompt=prompt, custom_prompt=custom_prompt)
-            )
+            tags.append(TagDefinition(
+                label=label,
+                prompt=prompt,
+                custom_prompt=custom_prompt,
+                override=override
+            ))
         else:
             raise ValueError(f"Invalid tag entry: {entry!r}")
 
@@ -61,7 +71,7 @@ def apply_prompt_template(
     """Format each tag's classification prompt using a config template."""
     result: list[TagDefinition] = []
     for tag in tags:
-        if prompt_overrides_template and tag.custom_prompt:
+        if (prompt_overrides_template or tag.override) and tag.custom_prompt:
             result.append(tag)
             continue
         try:
