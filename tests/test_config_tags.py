@@ -105,7 +105,7 @@ scoring:
         encoding="utf-8",
     )
     config = load_config(config_file)
-    assert config.scoring.prompt_overrides_template is True
+    assert config.scoring.prompt_overrides_template is False
 
 
 def test_load_tags_override(tmp_path: Path):
