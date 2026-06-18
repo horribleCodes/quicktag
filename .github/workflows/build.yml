@@ -131,7 +131,9 @@ jobs:
         run: |
           set -euo pipefail
           version=13.59
-          curl -fsSL "https://exiftool.org/Image-ExifTool-${version}.tar.gz" -o /tmp/exiftool.tar.gz
+          curl -fsSL -L --max-time 120 \
+            "https://sourceforge.net/projects/exiftool/files/Image-ExifTool-${version}.tar.gz/download" \
+            -o /tmp/exiftool.tar.gz
           tar xzf /tmp/exiftool.tar.gz -C /tmp
           sudo ln -sf "/tmp/Image-ExifTool-${version}/exiftool" /usr/local/bin/exiftool
           exiftool -ver
