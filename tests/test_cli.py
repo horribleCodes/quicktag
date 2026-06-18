@@ -83,7 +83,9 @@ paths:
     assert main(["--root", str(tmp_path)]) == 0
 
 
-def test_main_exiftool_setup_error_exits_one(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+def test_main_exiftool_setup_error_exits_one(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
     (tmp_path / "config.yaml").write_text(
         """
 paths:
@@ -102,7 +104,9 @@ paths:
     assert main(["--root", str(tmp_path)]) == 1
 
 
-def test_main_qq_disables_progress(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys):
+def test_main_qq_disables_progress(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys
+):
     (tmp_path / "config.yaml").write_text(
         """
 paths:

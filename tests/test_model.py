@@ -19,9 +19,7 @@ from quicktag.tags import TagDefinition
 def _write_p_mode_byte_transparency_png(path: Path) -> None:
     """Create a P-mode PNG whose transparency is stored as a byte string."""
     img = Image.new("P", (2, 2))
-    img.putpalette(
-        [255, 0, 0, 0, 255, 0, 0, 0, 255] + [0, 0, 0] * (256 - 3)
-    )
+    img.putpalette([255, 0, 0, 0, 255, 0, 0, 0, 255] + [0, 0, 0] * (256 - 3))
     img.putpixel((0, 0), 0)
     img.putpixel((1, 0), 1)
     img.putpixel((0, 1), 2)
@@ -57,9 +55,7 @@ def test_load_rgb_image_naive_convert_warns(tmp_path: Path):
         with Image.open(png_path) as img:
             img.convert("RGB")
 
-    assert any(
-        "Palette images with Transparency" in str(w.message) for w in caught
-    )
+    assert any("Palette images with Transparency" in str(w.message) for w in caught)
 
 
 def test_score_passes_pil_image_without_user_warning(
@@ -99,7 +95,9 @@ def test_score_passes_pil_image_without_user_warning(
         lambda *_args, **_kwargs: mock_session,
     )
 
-    tagger = OnnxSigLIPTagger("horrible/siglip2-base-patch16-224", tmp_path, local_files_only=True)
+    tagger = OnnxSigLIPTagger(
+        "horrible/siglip2-base-patch16-224", tmp_path, local_files_only=True
+    )
 
     with warnings.catch_warnings(record=True) as caught:
         warnings.simplefilter("always")

@@ -13,7 +13,8 @@ from tqdm import tqdm
 from quicktag.config import AppConfig
 from quicktag.metadata import MetadataWriter
 from quicktag.onnx_tagger import OnnxSigLIPTagger
-from quicktag.paths import HuggingFaceCacheLayout, get_exiftool_path, resolve_path
+from quicktag.exiftool_setup import get_exiftool_path
+from quicktag.paths import HuggingFaceCacheLayout, resolve_path
 from quicktag.scoring import ScoredTag, select_tags
 from quicktag.tags import TagDefinition
 
@@ -76,7 +77,10 @@ def run_pipeline(
         if hf_cache.local_files_only:
             logger.info("Loading model %s from cache...", config.model.name)
         else:
-            logger.info("Loading model %s (first run may download weights)...", config.model.name)
+            logger.info(
+                "Loading model %s (first run may download weights)...",
+                config.model.name,
+            )
         tagger = OnnxSigLIPTagger(
             config.model.name,
             hf_cache.load_home,
@@ -105,7 +109,9 @@ def run_pipeline(
                     progress.set_postfix_str(image_path.name, refresh=False)
 
                 try:
-                    _copy_image(image_path, dest_path, config.processing.preserve_timestamps)
+                    _copy_image(
+                        image_path, dest_path, config.processing.preserve_timestamps
+                    )
                     scored = tagger.score(image_path, tags)
                     selected = select_tags(scored, config.scoring)
                     result.tags = selected

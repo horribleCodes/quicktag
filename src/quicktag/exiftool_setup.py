@@ -148,7 +148,12 @@ def ensure_exiftool(install_dir: Path) -> Path:
     dest_dir = install_dir / "exiftool"
     try:
         _download_windows_exiftool(dest_dir)
-    except (OSError, urllib.error.URLError, zipfile.BadZipFile, FileNotFoundError) as exc:
+    except (
+        OSError,
+        urllib.error.URLError,
+        zipfile.BadZipFile,
+        FileNotFoundError,
+    ) as exc:
         raise ExifToolSetupError(
             f"Failed to download ExifTool: {exc}",
             _install_hint(install_dir),

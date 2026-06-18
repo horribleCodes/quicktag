@@ -10,7 +10,9 @@ def test_select_tags_min_score():
         ScoredTag("dog", 0.04),
         ScoredTag("bird", 0.2),
     ]
-    selected = select_tags(scored, ScoringConfig(min_score=0.05, top_k=None, top_p=None))
+    selected = select_tags(
+        scored, ScoringConfig(min_score=0.05, top_k=None, top_p=None)
+    )
     labels = [t.label for t in selected]
     assert labels == ["cat", "bird"]
 

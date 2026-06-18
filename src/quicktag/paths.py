@@ -68,7 +68,9 @@ def _snapshot_has_weights(snapshot: Path) -> bool:
         return False
     if any((snapshot / name).is_file() for name in _WEIGHT_FILENAMES):
         return True
-    return any(snapshot.glob("model-*.safetensors")) or any(snapshot.glob("pytorch_model-*.bin"))
+    return any(snapshot.glob("model-*.safetensors")) or any(
+        snapshot.glob("pytorch_model-*.bin")
+    )
 
 
 def _snapshot_has_onnx(snapshot: Path) -> bool:
@@ -231,10 +233,9 @@ def setup_huggingface_cache(
     """Resolve cache layout and configure Hugging Face env vars."""
     layout = resolve_hf_cache(install_dir, config_cache_dir, model_name)
     if layout.source == "primary":
-        _apply_hf_cache_env(layout.primary_home, _default_model_cache_dir(layout.primary_home))
+        _apply_hf_cache_env(
+            layout.primary_home, _default_model_cache_dir(layout.primary_home)
+        )
     else:
         _apply_hf_cache_env(layout.load_home, layout.hub_dir)
     return layout
-
-
-from quicktag.exiftool_setup import get_exiftool_path  # noqa: E402

@@ -55,7 +55,9 @@ def _preprocess_image(image: Image.Image, config: dict) -> np.ndarray:
     return np.expand_dims(pixels, axis=0)
 
 
-def _encode_prompts(tokenizer: Tokenizer, prompts: list[str], max_length: int) -> np.ndarray:
+def _encode_prompts(
+    tokenizer: Tokenizer, prompts: list[str], max_length: int
+) -> np.ndarray:
     encoded = tokenizer.encode_batch(prompts)
     batch = np.zeros((len(prompts), max_length), dtype=np.int64)
     for row, item in enumerate(encoded):
@@ -140,8 +142,12 @@ class OnnxSigLIPTagger:
         pixel_values = _preprocess_image(load_rgb_image(image_path), self._preprocessor)
         input_ids = _encode_prompts(self._tokenizer, prompts, self._max_length)
 
-        outputs = self._session.run(None, {"pixel_values": pixel_values, "input_ids": input_ids})
-        output_meta = {item.name: index for index, item in enumerate(self._session.get_outputs())}
+        outputs = self._session.run(
+            None, {"pixel_values": pixel_values, "input_ids": input_ids}
+        )
+        output_meta = {
+            item.name: index for index, item in enumerate(self._session.get_outputs())
+        }
         logits = outputs[output_meta["logits_per_image"]]
         scores = [_sigmoid(float(logits[0, index])) for index in range(len(prompts))]
 
