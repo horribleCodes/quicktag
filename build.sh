@@ -14,8 +14,8 @@ PYTHON=$(command -v python3 || command -v python)
 
 has_exiftool() {
     command -v exiftool &>/dev/null \
-        || [[ -x assets/exiftool/exiftool ]] \
-        || [[ -f assets/exiftool/exiftool && -d assets/exiftool/lib ]]
+        || [[ -x ./exiftool/exiftool ]] \
+        || [[ -f ./exiftool/exiftool && -d ./exiftool/lib ]]
 }
 
 if ! has_exiftool; then

@@ -43,7 +43,6 @@ def find_exiftool(install_dir: Path) -> Path | None:
     candidates.extend(
         [
             install_dir / "exiftool" / exe_name,
-            install_dir / "assets" / "exiftool" / exe_name,
         ]
     )
     for candidate in candidates:
