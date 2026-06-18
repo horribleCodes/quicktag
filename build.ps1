@@ -4,36 +4,15 @@ $ErrorActionPreference = "Stop"
 $ProjectRoot = $PSScriptRoot
 Set-Location $ProjectRoot
 
+Write-Host "==> Creating virtual environment"
+python -m venv .venv
+
 $Python = Join-Path $ProjectRoot ".venv\Scripts\python.exe"
 $Pip = Join-Path $ProjectRoot ".venv\Scripts\pip.exe"
 
-if (-not (Test-Path $Python)) {
-    Write-Host "==> Creating virtual environment"
-    python -m venv .venv
-} else {
-    Write-Host "==> Using existing virtual environment"
-}
-
-$depsOk = $false
-& $Python -c "import onnxruntime, PyInstaller" 2>$null
-if ($LASTEXITCODE -eq 0) { $depsOk = $true }
-
-if ($depsOk) {
-    Write-Host "==> Dependencies already installed"
-    & $Pip install -e ".[dev]"
-} else {
-    Write-Host "==> Installing project dependencies"
-    & $Python -m pip install --upgrade pip
-    & $Pip install -e ".[dev]"
-}
-
-& $Python -c "import torch" 2>$null
-if ($LASTEXITCODE -eq 0) {
-    Write-Host ""
-    Write-Host "WARNING: PyTorch is installed in the build venv but is no longer bundled."
-    Write-Host "Remove torch from .venv to avoid accidental PyInstaller inclusion."
-    Write-Host ""
-}
+Write-Host "==> Installing project dependencies"
+& $Python -m pip install --upgrade pip
+& $Pip install -e ".[dev]"
 
 Write-Host "==> Building executable with PyInstaller"
 $PyInstallerArgs = @("quicktag.spec", "--distpath", "dist/win", "--noconfirm")
