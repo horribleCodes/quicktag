@@ -28,9 +28,6 @@ jobs:
           pip install --upgrade pip
           pip install -e ".[dev]"
 
-      - name: Install ExifTool
-        run: sudo apt-get update && sudo apt-get install -y libimage-exiftool-perl
-
       - name: Run tests
         run: pytest -m "not integration"
 
@@ -130,8 +127,26 @@ jobs:
           path: build/quicktag
           key: pyinstaller-${{ runner.os }}-${{ hashFiles('quicktag.spec', 'hooks/**', 'src/quicktag/**') }}-onnx-v1
 
+      - name: Restore ExifTool cache
+        uses: actions/cache@v5
+        with:
+          path: .cache/exiftool
+          key: exiftool-${{ runner.os }}-13.59-v1
+
       - name: Install ExifTool
-        run: sudo apt-get update && sudo apt-get install -y libimage-exiftool-perl
+        run: |
+          set -euo pipefail
+          version=13.59
+          install_dir="$GITHUB_WORKSPACE/.cache/exiftool/Image-ExifTool-${version}"
+          if [ ! -x "$install_dir/exiftool" ]; then
+            mkdir -p "$GITHUB_WORKSPACE/.cache/exiftool"
+            curl -fsSL -L --max-time 120 \
+              "https://sourceforge.net/projects/exiftool/files/Image-ExifTool-${version}.tar.gz/download" \
+              -o /tmp/exiftool.tar.gz
+            tar xzf /tmp/exiftool.tar.gz -C "$GITHUB_WORKSPACE/.cache/exiftool"
+          fi
+          sudo ln -sf "$install_dir/exiftool" /usr/local/bin/exiftool
+          exiftool -ver
 
       - name: Build QuickTag
         run: chmod +x build.sh && ./build.sh
