@@ -35,27 +35,6 @@ if ($LASTEXITCODE -eq 0) {
     Write-Host ""
 }
 
-$ExifToolDir = Join-Path $ProjectRoot "assets\exiftool"
-New-Item -ItemType Directory -Force -Path $ExifToolDir | Out-Null
-$ExifToolExe = Join-Path $ExifToolDir "exiftool.exe"
-
-if (-not (Test-Path $ExifToolExe)) {
-    Write-Host "==> Downloading ExifTool for Windows"
-    $ExifToolZip = Join-Path $env:TEMP "exiftool-13.59_64.zip"
-    $ExifToolUrl = "https://exiftool.org/exiftool-13.59_64.zip"
-    Invoke-WebRequest -Uri $ExifToolUrl -OutFile $ExifToolZip
-
-    $ExtractDir = Join-Path $env:TEMP "exiftool-extract"
-    if (Test-Path $ExtractDir) { Remove-Item -Recurse -Force $ExtractDir }
-    Expand-Archive -Path $ExifToolZip -DestinationPath $ExtractDir
-
-    $WinDir = Get-ChildItem -Path $ExtractDir -Directory | Where-Object { $_.Name -like "exiftool-*" } | Select-Object -First 1
-    Copy-Item -Path (Join-Path $WinDir.FullName "exiftool(-k).exe") -Destination $ExifToolExe -Force
-    Copy-Item -Path (Join-Path $WinDir.FullName "exiftool_files") -Destination $ExifToolDir -Recurse -Force
-} else {
-    Write-Host "==> Using cached ExifTool"
-}
-
 Write-Host "==> Building executable with PyInstaller"
 $PyInstallerArgs = @("quicktag.spec", "--distpath", "dist/win", "--noconfirm")
 if ($env:CI -ne "true") {
@@ -69,6 +48,5 @@ New-Item -ItemType Directory -Force -Path (Join-Path $DistDir "output") | Out-Nu
 Copy-Item -Path (Join-Path $ProjectRoot "config.example.yaml") -Destination (Join-Path $DistDir "config.yaml") -Force
 Copy-Item -Path (Join-Path $ProjectRoot "tags.example.yaml") -Destination (Join-Path $DistDir "tags.yaml") -Force
 Copy-Item -Path (Join-Path $ProjectRoot "docs\DIST_README_WIN.md") -Destination (Join-Path $DistDir "README.md") -Force
-Copy-Item -Path $ExifToolDir -Destination (Join-Path $DistDir "exiftool") -Recurse -Force
 
 Write-Host "==> Build complete: $DistDir"
