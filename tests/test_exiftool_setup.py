@@ -31,7 +31,9 @@ def _write_fake_exiftool_zip(zip_path: Path) -> None:
                 archive.write(path, path.relative_to(root))
 
 
-def test_find_exiftool_from_install_dir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+def test_find_exiftool_from_install_dir(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
     install = tmp_path / "install"
     exe_name = "exiftool.exe" if sys.platform == "win32" else "exiftool"
     exiftool = install / "exiftool" / exe_name
@@ -74,7 +76,9 @@ def test_find_exiftool_uses_exe_dir_when_frozen_with_root_override(
     assert find_exiftool(smoke) == exiftool
 
 
-def test_find_exiftool_falls_back_to_which(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+def test_find_exiftool_falls_back_to_which(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
     monkeypatch.setattr(
         "quicktag.exiftool_setup.shutil.which",
         lambda name: "/usr/bin/exiftool" if name == "exiftool" else None,
@@ -82,21 +86,29 @@ def test_find_exiftool_falls_back_to_which(tmp_path: Path, monkeypatch: pytest.M
     assert find_exiftool(tmp_path) == Path("/usr/bin/exiftool")
 
 
-def test_get_exiftool_path_raises_when_missing(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+def test_get_exiftool_path_raises_when_missing(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
     monkeypatch.setattr("quicktag.exiftool_setup.find_exiftool", lambda _install: None)
     with pytest.raises(FileNotFoundError, match="ExifTool not found"):
         get_exiftool_path(tmp_path)
 
 
-def test_ensure_exiftool_returns_existing_path(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+def test_ensure_exiftool_returns_existing_path(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
     expected = Path("/usr/bin/exiftool")
-    monkeypatch.setattr("quicktag.exiftool_setup.find_exiftool", lambda _install: expected)
+    monkeypatch.setattr(
+        "quicktag.exiftool_setup.find_exiftool", lambda _install: expected
+    )
     called = {"download": False}
 
     def fake_download(_dest: Path) -> None:
         called["download"] = True
 
-    monkeypatch.setattr("quicktag.exiftool_setup._download_windows_exiftool", fake_download)
+    monkeypatch.setattr(
+        "quicktag.exiftool_setup._download_windows_exiftool", fake_download
+    )
     assert ensure_exiftool(tmp_path) == expected
     assert called["download"] is False
 
@@ -142,7 +154,9 @@ def test_ensure_exiftool_windows_downloads_when_missing(
 
     monkeypatch.setattr("quicktag.exiftool_setup.sys.platform", "win32")
     monkeypatch.setattr("quicktag.exiftool_setup.find_exiftool", fake_find)
-    monkeypatch.setattr("quicktag.exiftool_setup._download_windows_exiftool", fake_download)
+    monkeypatch.setattr(
+        "quicktag.exiftool_setup._download_windows_exiftool", fake_download
+    )
 
     assert ensure_exiftool(install) == expected
     assert calls["download"] == 1
@@ -157,7 +171,9 @@ def test_ensure_exiftool_windows_download_failure_raises_with_hint(
     def fail_download(_dest: Path) -> None:
         raise OSError("network down")
 
-    monkeypatch.setattr("quicktag.exiftool_setup._download_windows_exiftool", fail_download)
+    monkeypatch.setattr(
+        "quicktag.exiftool_setup._download_windows_exiftool", fail_download
+    )
 
     with pytest.raises(ExifToolSetupError) as exc_info:
         ensure_exiftool(tmp_path)
@@ -176,4 +192,6 @@ def test_extract_windows_exiftool_from_zip(tmp_path: Path):
     _extract_windows_exiftool(zip_path, dest_dir)
 
     assert (dest_dir / "exiftool.exe").read_bytes() == b"fake-exe"
-    assert (dest_dir / "exiftool_files" / "support.txt").read_text(encoding="utf-8") == "support"
+    assert (dest_dir / "exiftool_files" / "support.txt").read_text(
+        encoding="utf-8"
+    ) == "support"

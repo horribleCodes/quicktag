@@ -6,7 +6,12 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from quicktag.paths import get_global_hf_home, get_install_dir, model_is_cached, resolve_path
+from quicktag.paths import (
+    get_global_hf_home,
+    get_install_dir,
+    model_is_cached,
+    resolve_path,
+)
 
 
 def main() -> int:

@@ -124,7 +124,9 @@ def main(argv: list[str] | None = None) -> int:
     )
 
     if is_huggingface_cli_installed():
-        log.info("Hugging Face CLI detected; using global cache at %s", hf_cache.primary_home)
+        log.info(
+            "Hugging Face CLI detected; using global cache at %s", hf_cache.primary_home
+        )
     else:
         log.info(
             "Hugging Face CLI not found; using local cache at %s",

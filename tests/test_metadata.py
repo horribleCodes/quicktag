@@ -35,16 +35,14 @@ class FakeExifToolHelper:
     def set_tags(self, files: object, tags: object, params: object = None) -> None:
         self.set_tags_calls.append((files, tags, params))
 
-    def get_tags(self, files: object, tags: object, params: object = None) -> list[dict]:
+    def get_tags(
+        self, files: object, tags: object, params: object = None
+    ) -> list[dict]:
         self.get_tags_calls.append((files, tags, params))
         return [{}]
 
 
-def _get_metadata(
-    exiftool_path:Path,
-    config:MetadataConfig,
-    image_path:Path
-):
+def _get_metadata(exiftool_path: Path, config: MetadataConfig, image_path: Path):
     with MetadataWriter(exiftool_path, config) as reader:
         records = reader._et.get_tags(
             [str(image_path)],
@@ -109,9 +107,7 @@ def test_metadata_unicode_round_trip(tmp_path: Path):
         writer.write_tags(image_path, UNICODE_TAGS)
 
     records = _get_metadata(
-        exiftool_path=exiftool_path,
-        config=config,
-        image_path=image_path
+        exiftool_path=exiftool_path, config=config, image_path=image_path
     )
 
     expected = UNICODE_TAGS
@@ -136,7 +132,7 @@ def test_metadata_tool_overwrites_prior_tags(tmp_path: Path):
     records = _get_metadata(
         exiftool_path=exiftool_path,
         config=MetadataConfig(fields=KEYWORD_FIELDS),
-        image_path=image_path
+        image_path=image_path,
     )
 
     expected = {"gamma", "delta"}
@@ -164,7 +160,7 @@ def test_metadata_merge_existing_preserves_prior_tags(tmp_path: Path):
     records = _get_metadata(
         exiftool_path=exiftool_path,
         config=MetadataConfig(fields=KEYWORD_FIELDS),
-        image_path=image_path
+        image_path=image_path,
     )
 
     expected = {"alpha", "beta", "gamma"}

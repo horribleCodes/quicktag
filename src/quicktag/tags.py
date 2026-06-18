@@ -34,12 +34,14 @@ def load_tags(path: Path) -> list[TagDefinition]:
             label = entry.strip()
             if not label:
                 continue
-            tags.append(TagDefinition(
-                label=label,
-                prompt=label.lower(),
-                custom_prompt=False,
-                override=False
-            ))
+            tags.append(
+                TagDefinition(
+                    label=label,
+                    prompt=label.lower(),
+                    custom_prompt=False,
+                    override=False,
+                )
+            )
         elif isinstance(entry, dict):
             label = str(entry.get("label", "")).strip()
             if not label:
@@ -47,12 +49,14 @@ def load_tags(path: Path) -> list[TagDefinition]:
             custom_prompt = "prompt" in entry
             override = entry.get("override", False)
             prompt = str(entry.get("prompt", label)).strip().lower()
-            tags.append(TagDefinition(
-                label=label,
-                prompt=prompt,
-                custom_prompt=custom_prompt,
-                override=override
-            ))
+            tags.append(
+                TagDefinition(
+                    label=label,
+                    prompt=prompt,
+                    custom_prompt=custom_prompt,
+                    override=override,
+                )
+            )
         else:
             raise ValueError(f"Invalid tag entry: {entry!r}")
 

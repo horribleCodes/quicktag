@@ -46,7 +46,9 @@ def _build_smoke_onnx() -> bytes:
         [1, "num_prompts"],
     )
 
-    reduce_axes = numpy_helper.from_array(np.array([1], dtype=np.int64), name="reduce_axes")
+    reduce_axes = numpy_helper.from_array(
+        np.array([1], dtype=np.int64), name="reduce_axes"
+    )
     cast_node = helper.make_node(
         "Cast",
         inputs=["input_ids"],
@@ -59,7 +61,9 @@ def _build_smoke_onnx() -> bytes:
         outputs=["prompt_sums"],
         keepdims=0,
     )
-    unsqueeze_axes = numpy_helper.from_array(np.array([0], dtype=np.int64), name="unsqueeze_axes")
+    unsqueeze_axes = numpy_helper.from_array(
+        np.array([0], dtype=np.int64), name="unsqueeze_axes"
+    )
     unsqueeze_node = helper.make_node(
         "Unsqueeze",
         inputs=["prompt_sums", "unsqueeze_axes"],
@@ -132,7 +136,10 @@ def generate_bundle(output_dir: Path = OUTPUT_DIR) -> Path:
         output_dir / "tokenizer_config.json",
         {"model_max_length": 64, "tokenizer_class": "PreTrainedTokenizerFast"},
     )
-    _write_json(output_dir / "special_tokens_map.json", {"unk_token": "<unk>", "pad_token": "<pad>"})
+    _write_json(
+        output_dir / "special_tokens_map.json",
+        {"unk_token": "<unk>", "pad_token": "<pad>"},
+    )
     _write_tokenizer(output_dir / "tokenizer.json")
 
     return output_dir

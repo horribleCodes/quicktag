@@ -70,7 +70,9 @@ def load_config(path: Path) -> AppConfig:
 
     on_error = processing_raw.get("on_error", "skip")
     if on_error not in {"skip", "fail"}:
-        raise ValueError(f"Invalid processing.on_error: {on_error!r} (expected 'skip' or 'fail')")
+        raise ValueError(
+            f"Invalid processing.on_error: {on_error!r} (expected 'skip' or 'fail')"
+        )
 
     return AppConfig(
         paths=PathsConfig(
@@ -86,7 +88,9 @@ def load_config(path: Path) -> AppConfig:
             top_k=scoring_raw.get("top_k", 10),
             top_p=scoring_raw.get("top_p", 0.9),
             prompt_template=scoring_raw.get("prompt_template"),
-            prompt_overrides_template=bool(scoring_raw.get("prompt_overrides_template", False)),
+            prompt_overrides_template=bool(
+                scoring_raw.get("prompt_overrides_template", False)
+            ),
         ),
         metadata=MetadataConfig(
             fields=list(metadata_raw.get("fields", ["Keywords", "XMP:Subject"])),
@@ -94,7 +98,9 @@ def load_config(path: Path) -> AppConfig:
         ),
         tags_file=str(raw.get("tags_file", "tags.yaml")),
         processing=ProcessingConfig(
-            extensions=[ext.lower().lstrip(".") for ext in processing_raw.get("extensions", [])]
+            extensions=[
+                ext.lower().lstrip(".") for ext in processing_raw.get("extensions", [])
+            ]
             or ["jpg", "jpeg", "png", "webp", "tiff", "tif"],
             preserve_timestamps=bool(processing_raw.get("preserve_timestamps", True)),
             on_error=on_error,

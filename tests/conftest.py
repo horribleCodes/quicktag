@@ -23,10 +23,14 @@ def _markexpr_passed_on_cli(config: pytest.Config) -> bool:
     return False
 
 
-def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item]) -> None:
+def pytest_collection_modifyitems(
+    config: pytest.Config, items: list[pytest.Item]
+) -> None:
     if _markexpr_passed_on_cli(config):
         return
-    skip = pytest.mark.skip(reason="integration tests opt-in; use: pytest -m integration")
+    skip = pytest.mark.skip(
+        reason="integration tests opt-in; use: pytest -m integration"
+    )
     for item in items:
         if "integration" in item.keywords:
             item.add_marker(skip)

@@ -5,7 +5,6 @@ from __future__ import annotations
 import shutil
 from pathlib import Path
 
-import pytest
 
 from quicktag.model_onnx import SMOKE_ONNX_MODEL_REPO
 from quicktag.onnx_tagger import OnnxSigLIPTagger
@@ -38,7 +37,9 @@ def test_smoke_bundle_artifacts_exist():
         assert (SMOKE_BUNDLE_DIR / name).is_file()
 
 
-def test_smoke_bundle_scores_without_download(tmp_path: Path, isolate_hf_cache_env: None):
+def test_smoke_bundle_scores_without_download(
+    tmp_path: Path, isolate_hf_cache_env: None
+):
     cache_home = tmp_path / "cache"
     _stage_smoke_bundle(cache_home)
 

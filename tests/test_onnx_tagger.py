@@ -65,7 +65,9 @@ def test_score_with_mock_session(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
         lambda *_args, **_kwargs: mock_session,
     )
 
-    tagger = OnnxSigLIPTagger("horrible/siglip2-base-patch16-224", tmp_path, local_files_only=True)
+    tagger = OnnxSigLIPTagger(
+        "horrible/siglip2-base-patch16-224", tmp_path, local_files_only=True
+    )
     tags = [
         TagDefinition(label="cat", prompt="a photo of a cat"),
         TagDefinition(label="dog", prompt="a photo of a dog"),
