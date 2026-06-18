@@ -19,6 +19,8 @@ quicktag/
 
 On first run, QuickTag downloads the SigLIP2 ONNX bundle (~1.5 GB) from Hugging Face (`horrible/siglip2-base-patch16-224`) into `.cache/huggingface`. You need an internet connection once; later runs work offline.
 
+If the Hugging Face CLI (`hf`) is installed, QuickTag prefers your global Hugging Face cache and reuses models already downloaded there.
+
 ## Prerequisites
 
 QuickTag requires **ExifTool** to write metadata. Install it before running:
@@ -109,36 +111,34 @@ scoring:
   prompt_template: "a photo of {tag}"
 ```
 
-With `prompt_overrides_template: true` (the default), tags that define an explicit `prompt` keep that text as-is; simple string tags still use the template. Set `prompt_overrides_template: false` to run the template over every tag, including those with custom prompts.
-
-Per-tag control is also available:
+The default for `prompt_overrides_template` is `false`. When `false`, the template applies to every tag, including those with custom prompts. Set it to `true` so tags with an explicit `prompt` keep that text as-is (simple string tags still use the template). Per-tag `override: true` also skips the template for that tag's custom prompt.
 
 ```yaml
-# Assuming config.yml
-# scoring:
-#   prompt_template: "a photo of {prompt}"
-#   prompt_overrides_template: false
+# prompt_overrides_template: false
+scoring:
+  prompt_template: "a photo of {prompt}"
+  prompt_overrides_template: false
 tags:
-  - person                       # results in "a photo of person"
-  - label: feline                # results in "a photo of a cat"
-    prompt: "a cat"
-  - label: dog                   # results in "contains dog
+  - person                    # "a photo of person"
+  - label: feline
+    prompt: "a cat"           # "a photo of a cat"
+  - label: dog
     prompt: "contains dogs"
-    override: true
+    override: true            # "contains dogs"
 ```
 
 ```yaml
-# Assuming config.yml
-# scoring:
-#   prompt_template: "a photo of {prompt}"
-#   prompt_overrides_template: true
+# prompt_overrides_template: true
+scoring:
+  prompt_template: "a photo of {prompt}"
+  prompt_overrides_template: true
 tags:
-  - person                       # results in "a photo of person"
-  - label: feline                # results in "a cat"
-    prompt: "a cat"
-  - label: dog                   # results in "contains dog
+  - person                     # "a photo of person"
+  - label: feline
+    prompt: "a cat"            # "a cat"
+  - label: dog
     prompt: "contains dogs"
-    override: true
+    override: true             # "contains dogs"
 ```
 
 ### Metadata
@@ -177,12 +177,13 @@ model:
 ```bash
 ./quicktag                     # use config.yaml in this folder
 ./quicktag --config other.yaml # use a different config file
-./quicktag -v                  # verbose logging
+./quicktag -v                  # verbose logging and per-image tag output
+./quicktag -q                  # warnings only
+./quicktag -qq                 # warnings only, no progress bar
 ```
 
 ## Supported formats
 
-Supports the following formats:
 - JPEG
 - PNG
 - WebP

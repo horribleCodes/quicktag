@@ -1,23 +1,43 @@
 # QuickTag
 
-Batch image tagger for Windows. QuickTag scans a folder of images, scores them against a predefined tag list using [SigLIP2](https://huggingface.co/horrible/siglip2-base-patch16-224), and writes the selected tags into image metadata. Tagged copies are saved to an output folder; originals are left unchanged.
+Batch image tagger for Linux and Windows. QuickTag scans a folder of images, scores them against a predefined tag list using [SigLIP2](https://huggingface.co/horrible/siglip2-base-patch16-224) via ONNX Runtime, and writes the selected tags into image metadata. Tagged copies are saved to an output folder; originals are left unchanged.
 
 ## User folder layout
 
-After downloading a release (or building locally), arrange your working folder like this:
+After downloading a release (or building locally), arrange your working folder like this.
+
+**Windows:**
 
 ```
 quicktag/
 ├── quicktag.exe
-├── exiftool/
+├── _internal/          ← bundled libraries (do not delete)
+├── exiftool/           ← created on first run if missing (see below)
 │   ├── exiftool.exe
 │   └── exiftool_files/
-├── input/          ← place images here
-├── output/         ← tagged copies appear here
-├── tags.yaml       ← list of possible tags
-├── config.yaml     ← paths and scoring settings
-└── .cache/         ← created on first run (downloaded model)
+├── input/              ← place images here
+├── output/             ← tagged copies appear here
+├── tags.yaml           ← list of possible tags
+├── config.yaml         ← paths and scoring settings
+├── README.md
+└── .cache/             ← created on first run (downloaded model)
 ```
+
+**Linux:**
+
+```
+quicktag/
+├── quicktag              ← the executable
+├── _internal/            ← bundled libraries (do not delete)
+├── input/
+├── output/
+├── tags.yaml
+├── config.yaml
+├── README.md
+└── .cache/
+```
+
+Linux requires [ExifTool](https://exiftool.org/) on your `PATH` (not bundled). Windows downloads ExifTool into `exiftool/` on first run when it is missing and an internet connection is available.
 
 ## Quick start
 
@@ -26,10 +46,12 @@ quicktag/
    - `tags.example.yaml` → `tags.yaml`
 2. Edit `tags.yaml` with the tags you want to detect.
 3. Put images in `input/`.
-4. Run `quicktag.exe`.
+4. Run `./quicktag` (Linux) or `quicktag.exe` (Windows).
 5. Find tagged copies in `output/`.
 
 **First run:** SigLIP2 ONNX bundle (~1.5 GB) downloads from [horrible/siglip2-base-patch16-224](https://huggingface.co/horrible/siglip2-base-patch16-224) into `.cache/huggingface`. An internet connection is required once; later runs work offline.
+
+If the Hugging Face CLI (`hf`) is installed, QuickTag prefers your global Hugging Face cache and reuses models already downloaded there.
 
 ## Configuration reference
 
@@ -49,7 +71,7 @@ scoring:
   top_k: 10             # max tags per image (null = no limit)
   top_p: 0.9            # nucleus cutoff on normalized scores (null = disabled)
   prompt_template: "a photo of {tag}"  # placeholders: {tag}, {label}, {prompt}
-  prompt_overrides_template: false      # if "true": explicit prompts on a tag skip the template
+  prompt_overrides_template: false      # if true: explicit prompts on a tag skip the template
 
 metadata:
   fields: [Keywords, "XMP:Subject"]
@@ -62,6 +84,8 @@ processing:
 
 tags_file: tags.yaml    # optional; default tags.yaml
 ```
+
+The shipped `config.example.yaml` uses `min_score: 0.001` for a more permissive starting point; the code default when the key is omitted is `0.05`.
 
 ### tags.yaml
 
@@ -101,36 +125,34 @@ scoring:
   prompt_template: "a photo of {tag}"
 ```
 
-With `prompt_overrides_template: true` (the default), tags that define an explicit `prompt` keep that text as-is; simple string tags still use the template. Set `prompt_overrides_template: false` to run the template over every tag, including those with custom prompts.
-
-Per-tag control is also available:
+The default for `prompt_overrides_template` is `false`. When `false`, the template applies to every tag, including those with custom prompts. Set it to `true` so tags with an explicit `prompt` keep that text as-is (simple string tags still use the template). Per-tag `override: true` also skips the template for that tag's custom prompt.
 
 ```yaml
-# Assuming config.yml
-# scoring:
-#   prompt_template: "a photo of {prompt}"
-#   prompt_overrides_template: false
+# prompt_overrides_template: false  → template applies to all tags
+scoring:
+  prompt_template: "a photo of {prompt}"
+  prompt_overrides_template: false
 tags:
   - person                       # "a photo of person"
-  - label: feline                # "a photo of a cat"
-    prompt: "a cat"
-  - label: dog                   # "contains dog
+  - label: feline
+    prompt: "a cat"               # "a photo of a cat"
+  - label: dog
     prompt: "contains dogs"
-    override: true
+    override: true                # "contains dogs" (override wins)
 ```
 
 ```yaml
-# Assuming config.yml
-# scoring:
-#   prompt_template: "a photo of {prompt}"
-#   prompt_overrides_template: true
+# prompt_overrides_template: true  → explicit prompts kept as-is
+scoring:
+  prompt_template: "a photo of {prompt}"
+  prompt_overrides_template: true
 tags:
   - person                       # "a photo of person"
-  - label: feline                # "a cat"
-    prompt: "a cat"
-  - label: dog                   # "contains dog
+  - label: feline
+    prompt: "a cat"               # "a cat"
+  - label: dog
     prompt: "contains dogs"
-    override: true
+    override: true                # "contains dogs"
 ```
 
 ### Scoring
@@ -145,10 +167,12 @@ SigLIP2 returns independent sigmoid scores per tag (multi-label). Tags are selec
 ## CLI
 
 ```
-quicktag.exe                     # uses ./config.yaml
-quicktag.exe --config path.yaml  # custom config
-quicktag.exe --root C:\myapp    # override install directory
-quicktag.exe -v                 # verbose logging
+quicktag                           # uses ./config.yaml beside the executable
+quicktag --config path.yaml        # custom config
+quicktag --root /path/to/quicktag  # override install directory (dev/smoke tests)
+quicktag -v                        # verbose logging and per-image tag output
+quicktag -q                        # warnings only
+quicktag -qq                       # warnings only, no progress bar
 ```
 
 Exit codes:
@@ -174,6 +198,8 @@ python -m quicktag
 pytest
 ```
 
+Or use the Makefile shortcuts (`make install`, `make test`, `make build-linux`).
+
 Integration tests (model download) are opt-in:
 
 ```bash
@@ -197,6 +223,8 @@ python scripts/generate_smoke_onnx_bundle.py
 
 On Linux/macOS, install [ExifTool](https://exiftool.org/) and ensure `exiftool` is on `PATH` for metadata writing during development.
 
+Stage images in `.tmp/input/` before a local build to copy them into the dist bundle's `input/` folder automatically (see `.cursor/rules/post-build-input-copy.mdc`).
+
 ## Building
 
 ### Linux / macOS
@@ -208,7 +236,7 @@ chmod +x build.sh
 ./build.sh
 ```
 
-If ExifTool is not installed, the script prints a warning with install instructions and continues. Output lands in `dist/linux/quicktag/`.
+If ExifTool is not installed, the script prints a warning with install instructions and continues. Output lands in `dist/linux/quicktag/` with `docs/DIST_README_LINUX.md` copied as `README.md`.
 
 ### Windows
 
@@ -218,9 +246,9 @@ From a Windows machine with Python 3.11 installed:
 .\build.ps1
 ```
 
-ExifTool is downloaded and bundled automatically. Output lands in `dist/win/quicktag/`.
+Output lands in `dist/win/quicktag/` with `docs/DIST_README_WIN.md` copied as `README.md`. ExifTool is not bundled at build time; the executable downloads it on first run when missing.
 
-GitHub Actions builds both Linux and Windows artifacts on push to `master`.
+GitHub Actions runs the Test workflow on pull requests and the Build workflow on push to `main`, `master`, or `release`, producing Linux and Windows artifacts.
 
 ## Releasing
 

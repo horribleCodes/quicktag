@@ -20,7 +20,7 @@ Use semver: `MAJOR.MINOR.PATCH` (e.g. `0.2.0`).
 1. Bump version in both files above and merge to `master`.
 2. Wait for the [Build workflow](.github/workflows/build.yml) to succeed on that commit.
 
-Build runs tests, then builds Linux and Windows binaries (PyInstaller via `build.sh` / `build.ps1`). On push to `master`, it uploads artifacts:
+The [Test workflow](.github/workflows/test.yml) runs `pytest` on pull requests and pushes. Build compiles Linux and Windows binaries (PyInstaller via `build.sh` / `build.ps1`) and smoke-tests the frozen executables. On push to `main`, `master`, or `release`, it uploads artifacts:
 
 - `quicktag-linux` → `dist/linux/quicktag/`
 - `quicktag-windows` → `dist/win/quicktag/`
