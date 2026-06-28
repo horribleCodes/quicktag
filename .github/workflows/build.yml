@@ -53,13 +53,13 @@ jobs:
           cache-dependency-path: pyproject.toml
 
       - name: Restore venv cache
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: .venv
           key: venv-${{ runner.os }}-py311-${{ hashFiles('pyproject.toml') }}-onnx-v1
 
       - name: Restore PyInstaller build cache
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: build/quicktag
           key: pyinstaller-${{ runner.os }}-${{ hashFiles('quicktag.spec', 'hooks/**', 'src/quicktag/**') }}-onnx-v1
@@ -123,19 +123,19 @@ jobs:
           cache-dependency-path: pyproject.toml
 
       - name: Restore venv cache
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: .venv
           key: venv-${{ runner.os }}-py311-${{ hashFiles('pyproject.toml') }}-onnx-v1
 
       - name: Restore PyInstaller build cache
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: build/quicktag
           key: pyinstaller-${{ runner.os }}-${{ hashFiles('quicktag.spec', 'hooks/**', 'src/quicktag/**') }}-onnx-v1
 
       - name: Restore ExifTool cache
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: .cache/exiftool
           key: exiftool-${{ runner.os }}-13.59-v1
