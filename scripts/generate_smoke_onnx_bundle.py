@@ -10,8 +10,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from onnx import TensorProto, helper, numpy_helper
 import numpy as np
+from onnx import TensorProto, helper, numpy_helper
 
 from quicktag.model_onnx import SMOKE_ONNX_MODEL_REPO
 
