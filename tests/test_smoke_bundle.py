@@ -5,7 +5,6 @@ from __future__ import annotations
 import shutil
 from pathlib import Path
 
-
 from quicktag.model_onnx import SMOKE_ONNX_MODEL_REPO
 from quicktag.onnx_tagger import OnnxSigLIPTagger
 from quicktag.paths import onnx_export_dir

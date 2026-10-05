@@ -8,7 +8,7 @@ from pathlib import Path
 import pytest
 
 from quicktag.config import MetadataConfig
-from quicktag.metadata import MetadataWriter, _CHARSET_PARAMS
+from quicktag.metadata import _CHARSET_PARAMS, MetadataWriter
 
 FIXTURES = Path(__file__).resolve().parent / "fixtures"
 UNICODE_TAGS = ["Müller", "Straße", "café"]
